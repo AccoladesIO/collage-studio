@@ -45,6 +45,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        /* ── Header ── */
         header {
             padding: 36px 48px 0;
             display: flex;
@@ -86,6 +87,7 @@
             font-weight: 500;
         }
 
+        /* ── Layout Picker ── */
         .picker-wrap {
             padding: 24px 48px 0;
         }
@@ -178,6 +180,7 @@
             transform: rotate(45deg);
         }
 
+        /* ── Controls ── */
         .controls-wrap {
             padding: 20px 48px 0;
             display: flex;
@@ -260,6 +263,7 @@
             color: var(--text-muted);
         }
 
+        /* ── Watermark Controls ── */
         .wm-row {
             display: flex;
             align-items: center;
@@ -364,6 +368,7 @@
             cursor: not-allowed;
         }
 
+        /* ── Watermark Overlay (inside download-wrapper) ── */
         .watermark-overlay {
             position: absolute;
             z-index: 10;
@@ -404,6 +409,7 @@
             transform: translate(-50%, -50%);
         }
 
+        /* ── Main Canvas ── */
         .canvas-wrap {
             padding: 24px 48px 16px;
             display: flex;
@@ -436,6 +442,9 @@
             overflow: hidden;
         }
 
+        /* ══════════════════════════════════
+     IMAGE CELLS — background-image for html2canvas compat
+     ══════════════════════════════════ */
         .collage-cell {
             background: rgba(0, 0, 0, 0.06);
             border-radius: 3px;
@@ -456,17 +465,16 @@
         }
 
         .collage-cell.filled:hover {
-            background: rgba(0, 0, 0, 0.06);
+            background: initial;
         }
 
-        .collage-cell img {
+        /* All images rendered as divs with background-image */
+        .cell-bg {
             position: absolute;
             inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center center;
-            display: block;
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
         }
 
         .cell-placeholder {
@@ -509,6 +517,7 @@
             background: rgba(0, 0, 0, 0.8);
         }
 
+        /* ── Circle cell — PERFECT CIRCLE ── */
         .collage-cell.circle-cell {
             background: transparent !important;
             overflow: visible;
@@ -534,13 +543,13 @@
             background: rgba(0, 0, 0, 0.06);
         }
 
-        .circle-mask img {
+        .circle-mask .cell-bg {
             position: absolute;
             inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center center;
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            border-radius: 50%;
         }
 
         .circle-mask .cell-placeholder {
@@ -557,6 +566,7 @@
             right: 8px;
         }
 
+        /* ── Diamond Layout ── */
         #collage-container.diamond-mode {
             display: block !important;
             padding: 0 !important;
@@ -593,8 +603,10 @@
             border-radius: inherit;
         }
 
+        /* Diamond images: use background-image for perfect center-crop with no stretch */
         .diamond-cell .diamond-inner .diamond-bg {
             position: absolute;
+            /* Expand beyond the rotated square to fill visible diamond area */
             width: 142%;
             height: 142%;
             top: 50%;
@@ -622,6 +634,7 @@
             transform: rotate(-45deg);
         }
 
+        /* ── Actions ── */
         .actions {
             display: flex;
             gap: 10px;
@@ -667,6 +680,7 @@
             display: none;
         }
 
+        /* ── Footer ── */
         footer {
             text-align: center;
             padding: 16px 48px 28px;
@@ -679,6 +693,7 @@
             color: #e25555;
         }
 
+        /* ── PWA Install Banner ── */
         .install-banner {
             position: fixed;
             bottom: 20px;
@@ -807,6 +822,7 @@
 
     <footer>Built with <span>❤️</span> by Accolades</footer>
 
+    <!-- PWA Install Prompt -->
     <div class="install-banner" id="install-banner">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M12 5v14M5 12l7 7 7-7" stroke-linecap="round" stroke-linejoin="round" />
@@ -818,9 +834,10 @@
     <input type="file" id="file-input" multiple accept="image/*">
 
     <script>
-        /**
-         * Layout configurations for collage templates
-         */
+        // ═══════════════════════════════════════════════
+        // LAYOUTS
+        // ═══════════════════════════════════════════════
+
         const LAYOUTS = [
             {
                 name: 'Diamond',
@@ -946,9 +963,10 @@
             },
         ];
 
-        /**
-         * Color palette configurations for backgrounds
-         */
+        // ═══════════════════════════════════════════════
+        // COLORS
+        // ═══════════════════════════════════════════════
+
         const COLORS = [
             { name: 'White', css: '#ffffff' },
             { name: 'Snow', css: '#f2f2f2' },
@@ -964,9 +982,10 @@
             { name: 'Wine', css: 'linear-gradient(135deg, #3e0e22 0%, #681838 100%)' },
         ];
 
-        /**
-         * Application state
-         */
+        // ═══════════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════════
+
         let activeLayout = 0;
         let images = [];
         let cellAssignments = [];
@@ -976,6 +995,10 @@
         let wmEnabled = false;
         let wmText = '';
         let wmPosition = 'br';
+
+        // ═══════════════════════════════════════════════
+        // DOM REFS
+        // ═══════════════════════════════════════════════
 
         const picker = document.getElementById('picker');
         const container = document.getElementById('collage-container');
@@ -994,9 +1017,10 @@
         const wmPosGroup = document.getElementById('wm-pos-group');
         const wmOverlay = document.getElementById('watermark');
 
-        /**
-         * Initialize layout picker thumbnails
-         */
+        // ═══════════════════════════════════════════════
+        // PICKER THUMBNAILS
+        // ═══════════════════════════════════════════════
+
         LAYOUTS.forEach((layout, i) => {
             const thumb = document.createElement('div');
             thumb.className = 'layout-thumb' + (i === 0 ? ' active' : '');
@@ -1047,18 +1071,14 @@
             picker.appendChild(thumb);
         });
 
-        /**
-         * Get cell count for a layout
-         * @param {Object} l - Layout object
-         * @returns {number} Number of cells
-         */
         function getCellCount (l) {
             return l.type === 'diamond' ? l.count : l.cells.length;
         }
 
-        /**
-         * Initialize color palette swatches
-         */
+        // ═══════════════════════════════════════════════
+        // COLOR PALETTE
+        // ═══════════════════════════════════════════════
+
         COLORS.forEach((c, i) => {
             const sw = document.createElement('div');
             sw.className = 'swatch' + (i === 0 ? ' active' : '');
@@ -1072,33 +1092,26 @@
             paletteEl.appendChild(sw);
         });
 
-        /**
-         * Apply background color to wrapper
-         */
-        function applyBg () {
-            wrapper.style.background = COLORS[activeBg].css;
-        }
+        function applyBg () { wrapper.style.background = COLORS[activeBg].css; }
 
-        /**
-         * Handle width slider input
-         */
+        // ═══════════════════════════════════════════════
+        // WIDTH SLIDER
+        // ═══════════════════════════════════════════════
+
         widthSlider.addEventListener('input', (e) => {
             gridWidth = parseInt(e.target.value);
             widthValEl.textContent = gridWidth + '%';
             applyWidth();
         });
-
-        /**
-         * Apply grid width
-         */
         function applyWidth () {
             container.style.width = gridWidth + '%';
             container.style.height = gridWidth + '%';
         }
 
-        /**
-         * Toggle watermark enabled state
-         */
+        // ═══════════════════════════════════════════════
+        // WATERMARK
+        // ═══════════════════════════════════════════════
+
         wmToggle.addEventListener('click', () => {
             wmEnabled = !wmEnabled;
             wmTrack.classList.toggle('on', wmEnabled);
@@ -1108,17 +1121,11 @@
             updateWatermark();
         });
 
-        /**
-         * Handle watermark text input
-         */
         wmInput.addEventListener('input', (e) => {
             wmText = e.target.value;
             updateWatermark();
         });
 
-        /**
-         * Handle watermark position button clicks
-         */
         wmPosGroup.addEventListener('click', (e) => {
             const btn = e.target.closest('.wm-pos-btn');
             if (!btn || btn.disabled) return;
@@ -1127,9 +1134,6 @@
             updateWatermark();
         });
 
-        /**
-         * Update watermark overlay display
-         */
         function updateWatermark () {
             if (!wmEnabled || !wmText.trim()) {
                 wmOverlay.style.display = 'none';
@@ -1140,10 +1144,10 @@
             wmOverlay.className = 'watermark-overlay pos-' + wmPosition;
         }
 
-        /**
-         * Select a layout by index
-         * @param {number} idx - Layout index
-         */
+        // ═══════════════════════════════════════════════
+        // SELECT LAYOUT
+        // ═══════════════════════════════════════════════
+
         function selectLayout (idx) {
             activeLayout = idx;
             document.querySelectorAll('.layout-thumb').forEach((t, j) => t.classList.toggle('active', j === idx));
@@ -1154,11 +1158,12 @@
             updateStatus();
         }
 
+        // ═══════════════════════════════════════════════
+        // RENDER
+        // ═══════════════════════════════════════════════
+
         const PLACEHOLDER = `<div class="cell-placeholder"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></div>`;
 
-        /**
-         * Render the grid based on current layout
-         */
         function renderGrid () {
             const layout = LAYOUTS[activeLayout];
             container.innerHTML = '';
@@ -1180,10 +1185,6 @@
             applyWidth();
         }
 
-        /**
-         * Render regular grid cells
-         * @param {Object} layout - Layout configuration
-         */
         function renderCells (layout) {
             layout.cells.forEach((def, i) => {
                 const cell = document.createElement('div');
@@ -1200,18 +1201,13 @@
             });
         }
 
-        /**
-         * Build a normal rectangular cell
-         * @param {HTMLElement} cell - Cell element
-         * @param {number} i - Cell index
-         */
         function buildNormalCell (cell, i) {
             if (cellAssignments[i] !== null && images[cellAssignments[i]]) {
                 cell.classList.add('filled');
-                const img = document.createElement('img');
-                img.src = images[cellAssignments[i]].dataUrl;
-                img.draggable = false;
-                cell.appendChild(img);
+                const bg = document.createElement('div');
+                bg.className = 'cell-bg';
+                bg.style.backgroundImage = `url(${images[cellAssignments[i]].dataUrl})`;
+                cell.appendChild(bg);
                 cell.appendChild(makeRemoveBtn(i));
             } else {
                 cell.innerHTML = PLACEHOLDER;
@@ -1219,21 +1215,16 @@
             }
         }
 
-        /**
-         * Build a circular masked cell
-         * @param {HTMLElement} cell - Cell element
-         * @param {number} i - Cell index
-         */
         function buildCircleCell (cell, i) {
             const mask = document.createElement('div');
             mask.className = 'circle-mask';
 
             if (cellAssignments[i] !== null && images[cellAssignments[i]]) {
                 cell.classList.add('filled');
-                const img = document.createElement('img');
-                img.src = images[cellAssignments[i]].dataUrl;
-                img.draggable = false;
-                mask.appendChild(img);
+                const bg = document.createElement('div');
+                bg.className = 'cell-bg';
+                bg.style.backgroundImage = `url(${images[cellAssignments[i]].dataUrl})`;
+                mask.appendChild(bg);
                 mask.appendChild(makeRemoveBtn(i));
             } else {
                 mask.innerHTML = PLACEHOLDER;
@@ -1242,10 +1233,6 @@
             cell.appendChild(mask);
         }
 
-        /**
-         * Render diamond layout cells
-         * @param {Object} layout - Layout configuration
-         */
         function renderDiamond (layout) {
             layout.diamonds.forEach((d, i) => {
                 const cell = document.createElement('div');
@@ -1263,6 +1250,7 @@
 
                 if (cellAssignments[i] !== null && images[cellAssignments[i]]) {
                     cell.classList.add('filled');
+                    // Use a div with background-image for perfect center-crop, no stretch
                     const bg = document.createElement('div');
                     bg.className = 'diamond-bg';
                     bg.style.backgroundImage = `url(${images[cellAssignments[i]].dataUrl})`;
@@ -1278,11 +1266,6 @@
             });
         }
 
-        /**
-         * Create a remove button for a cell
-         * @param {number} i - Cell index
-         * @returns {HTMLElement} Remove button element
-         */
         function makeRemoveBtn (i) {
             const btn = document.createElement('button');
             btn.className = 'cell-remove';
@@ -1296,9 +1279,6 @@
             return btn;
         }
 
-        /**
-         * Update status bar with cell count
-         */
         function updateStatus () {
             const total = getCellCount(LAYOUTS[activeLayout]);
             const filled = cellAssignments.filter(a => a !== null).length;
@@ -1306,9 +1286,10 @@
             btnDownload.disabled = filled < total;
         }
 
-        /**
-         * Handle file input change
-         */
+        // ═══════════════════════════════════════════════
+        // FILE HANDLING
+        // ═══════════════════════════════════════════════
+
         fileInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             if (!files.length) return;
@@ -1327,11 +1308,6 @@
             fileInput.value = '';
         });
 
-        /**
-         * Read a file and convert to data URL
-         * @param {File} file - File object
-         * @param {Function} cb - Callback with image index
-         */
         function readFile (file, cb) {
             const reader = new FileReader();
             reader.onload = (ev) => {
@@ -1342,10 +1318,6 @@
             reader.readAsDataURL(file);
         }
 
-        /**
-         * Enqueue a file for automatic cell assignment
-         * @param {File} file - File object
-         */
         function enqueueFile (file) {
             readFile(file, (idx) => {
                 const slot = cellAssignments.indexOf(null);
@@ -1359,9 +1331,6 @@
 
         btnUpload.addEventListener('click', () => { pendingCellIndex = null; fileInput.click(); });
 
-        /**
-         * Clear all images and reset collage
-         */
         btnClear.addEventListener('click', () => {
             images = [];
             cellAssignments = new Array(getCellCount(LAYOUTS[activeLayout])).fill(null);
@@ -1369,9 +1338,10 @@
             updateStatus();
         });
 
-        /**
-         * Handle download button click
-         */
+        // ═══════════════════════════════════════════════
+        // DOWNLOAD
+        // ═══════════════════════════════════════════════
+
         btnDownload.addEventListener('click', async () => {
             btnDownload.textContent = 'Exporting…';
             btnDownload.disabled = true;
@@ -1401,6 +1371,10 @@
             btnDownload.textContent = 'Download Collage';
             updateStatus();
         });
+
+        // ═══════════════════════════════════════════════
+        // PWA — Service Worker + Install Prompt
+        // ═══════════════════════════════════════════════
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => { });
@@ -1433,6 +1407,10 @@
         window.addEventListener('appinstalled', () => {
             installBanner.style.display = 'none';
         });
+
+        // ═══════════════════════════════════════════════
+        // BOOT
+        // ═══════════════════════════════════════════════
 
         applyBg();
         selectLayout(0);
