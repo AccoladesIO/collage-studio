@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collage Studio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Instrument+Serif:ital@0;1&display=swap');
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #fafafa;
+            --surface: #ffffff;
+            --border: #e0e0e0;
+            --border-hover: #b8b8b8;
+            --text: #111111;
+            --text-muted: #999999;
+            --accent: #111111;
+            --radius: 10px;
+            --gap: 4px;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            padding: 36px 48px 0;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        header h1 {
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 1.9rem;
+            letter-spacing: -0.02em;
+        }
+
+        header h1 span {
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        .status {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            letter-spacing: 0.03em;
+        }
+
+        .status strong {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .section-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        /** Layout Picker */
+        .picker-wrap {
+            padding: 24px 48px 0;
+        }
+
+        .picker {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .picker::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .picker::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .layout-thumb {
+            flex-shrink: 0;
+            width: 100px;
+            height: 70px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 5px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: var(--surface);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .layout-thumb:hover {
+            border-color: var(--border-hover);
+        }
+
+        .layout-thumb.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+
+        .layout-thumb .mini-grid {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            gap: 1.5px;
+        }
+
+        .layout-thumb .mini-grid .cell {
+            background: #e8e8e8;
+            border-radius: 1.5px;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .layout-thumb .mini-grid .cell.circle {
+            border-radius: 50%;
+        }
+
+        .layout-thumb .count-badge {
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.55rem;
+            font-weight: 500;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            line-height: 1;
+        }
+
+        .layout-thumb .mini-diamond-wrap {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .layout-thumb .mini-diamond {
+            position: absolute;
+            background: #e8e8e8;
+            border-radius: 2px;
+            transform: rotate(45deg);
+        }
+
+        /** Controls */
+        .controls-wrap {
+            padding: 20px 48px 0;
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .palette {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .swatch {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 2.5px solid transparent;
+            cursor: pointer;
+            transition: transform 0.15s;
+            outline: 1.5px solid var(--border);
+            outline-offset: 0px;
+        }
+
+        .swatch:hover {
+            transform: scale(1.15);
+        }
+
+        .swatch.active {
+            outline-color: var(--accent);
+            outline-width: 2px;
+            outline-offset: 2px;
+        }
+
+        .width-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .width-control input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 130px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .width-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+
+        .width-control input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: none;
+        }
+
+        .width-val {
+            font-size: 0.78rem;
+            font-weight: 500;
+            min-width: 36px;
+            color: var(--text-muted);
+        }
+
+        /** Main Canvas */
+        .canvas-wrap {
+            padding: 24px 48px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #download-wrapper {
+            width: 100%;
+            max-width: 780px;
+            aspect-ratio: 4 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius);
+            overflow: hidden;
+            position: relative;
+            background: #ffffff;
+            border: 1px solid var(--border);
+        }
+
+        #collage-container {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            gap: var(--gap);
+            padding: var(--gap);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /** Grid Cells */
+        .collage-cell {
+            background: rgba(0, 0, 0, 0.06);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .collage-cell:hover {
+            background: rgba(0, 0, 0, 0.09);
+        }
+
+        .collage-cell.filled {
+            cursor: default;
+        }
+
+        .collage-cell.filled:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        .collage-cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .cell-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            color: rgba(0, 0, 0, 0.18);
+            pointer-events: none;
+        }
+
+        .cell-placeholder svg {
+            opacity: 0.5;
+        }
+
+        .cell-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 0.6rem;
+            display: none;
+            place-items: center;
+            line-height: 1;
+            z-index: 5;
+        }
+
+        .collage-cell.filled:hover .cell-remove {
+            display: grid;
+        }
+
+        .cell-remove:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        /** Circle cell — PERFECT CIRCLE */
+        .collage-cell.circle-cell {
+            background: transparent !important;
+            overflow: visible;
+        }
+
+        .circle-mask {
+            aspect-ratio: 1 / 1;
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .collage-cell.circle-cell:hover .circle-mask {
+            background: rgba(0, 0, 0, 0.09);
+        }
+
+        .collage-cell.circle-cell.filled:hover .circle-mask {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        .circle-mask img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            inset: 0;
+        }
+
+        .circle-mask .cell-remove {
+            position: absolute;
+            top: 50%;
+            right: 50%;
+            transform: translate(50%, -150%);
+        }
+
+        /** Diamond Layout */
+        #collage-container.diamond-mode {
+            display: block !important;
+            padding: 0 !important;
+            gap: 0 !important;
+        }
+
+        .diamond-cell {
+            position: absolute;
+            transform: rotate(45deg);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.06);
+            transition: background 0.15s;
+        }
+
+        .diamond-cell:hover {
+            background: rgba(0, 0, 0, 0.09);
+        }
+
+        .diamond-cell.filled {
+            cursor: default;
+        }
+
+        .diamond-cell.filled:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        .diamond-cell .diamond-inner {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: inherit;
+        }
+
+        .diamond-cell img {
+            transform: rotate(-45deg) scale(1.45);
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .diamond-cell .cell-placeholder {
+            transform: rotate(-45deg);
+        }
+
+        .diamond-cell .cell-remove {
+            transform: rotate(-45deg);
+            top: 35%;
+            right: 35%;
+        }
+
+        /** Actions */
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 9px 22px;
+            border-radius: 100px;
+            border: 1.5px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+        }
+
+        .btn.primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .btn.primary:hover {
+            background: #333;
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+
+            header,
+            .picker-wrap,
+            .controls-wrap,
+            .canvas-wrap {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            header h1 {
+                font-size: 1.4rem;
+            }
+
+            .layout-thumb {
+                width: 78px;
+                height: 54px;
+            }
+
+            .controls-wrap {
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Collage <span>Studio</span></h1>
+        <div class="status" id="status">Select a layout to begin</div>
+    </header>
+
+    <div class="picker-wrap">
+        <div class="section-label">Layout</div>
+        <div class="picker" id="picker"></div>
+    </div>
+
+    <div class="controls-wrap">
+        <div class="control-group">
+            <div class="section-label">Background</div>
+            <div class="palette" id="palette"></div>
+        </div>
+        <div class="control-group">
+            <div class="section-label">Grid Width</div>
+            <div class="width-control">
+                <input type="range" id="width-slider" min="50" max="100" value="100" step="5">
+                <span class="width-val" id="width-val">100%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="canvas-wrap">
+        <div id="download-wrapper">
+            <div id="collage-container"></div>
+        </div>
+        <div class="actions">
+            <button class="btn" id="btn-upload">Upload Images</button>
+            <button class="btn" id="btn-clear">Clear All</button>
+            <button class="btn primary" id="btn-download" disabled>Download Collage</button>
+        </div>
+    </div>
+
+    <input type="file" id="file-input" multiple accept="image/*">
+
+    <script>
+        /**
+         * @typedef {Object} Layout
+         * @property {string} name
+         * @property {string} type
+         * @property {string} [aspect]
+         * @property {number} [count]
+         * @property {Array} [diamonds]
+         * @property {string} [cols]
+         * @property {string} [rows]
+         * @property {Array} [cells]
+         */
+
+        /** @type {Layout[]} */
+        const LAYOUTS = [
+            {
+                name: 'Diamond',
+                type: 'diamond',
+                aspect: '16 / 9',
+                count: 7,
+                diamonds: [
+                    { x: 24.5, y: 27, size: 25 },
+                    { x: 50, y: 27, size: 25 },
+                    { x: 75.5, y: 27, size: 25 },
+                    { x: 11.5, y: 64, size: 25 },
+                    { x: 37, y: 64, size: 25 },
+                    { x: 62.5, y: 64, size: 25 },
+                    { x: 88, y: 64, size: 25 },
+                ]
+            },
+            {
+                name: 'Classic Grid',
+                type: 'grid',
+                cols: 'repeat(3, 1fr)',
+                rows: 'repeat(3, 1fr)',
+                cells: [
+                    { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' },
+                    { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }, { col: '3/4', row: '2/3' },
+                    { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' },
+                ]
+            },
+            {
+                name: 'Hero Left',
+                type: 'grid',
+                cols: 'repeat(4, 1fr)',
+                rows: 'repeat(3, 1fr)',
+                cells: [
+                    { col: '1/3', row: '1/3' },
+                    { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
+                    { col: '3/4', row: '2/3' }, { col: '4/5', row: '2/3' },
+                    { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }, { col: '4/5', row: '3/4' },
+                ]
+            },
+            {
+                name: 'Focus Center',
+                type: 'grid',
+                cols: 'repeat(4, 1fr)',
+                rows: 'repeat(3, 1fr)',
+                cells: [
+                    { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
+                    { col: '1/2', row: '2/3' }, { col: '2/4', row: '2/3', circle: true }, { col: '4/5', row: '2/3' },
+                    { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }, { col: '4/5', row: '3/4' },
+                ]
+            },
+            {
+                name: 'Magazine',
+                type: 'grid',
+                cols: '2fr 1fr 1fr 1fr 1fr 2fr',
+                rows: 'repeat(4, 1fr)',
+                cells: [
+                    { col: '1/3', row: '1/3' },
+                    { col: '3/4', row: '1/2' },
+                    { col: '4/5', row: '1/2' },
+                    { col: '5/6', row: '1/2' },
+                    { col: '6/7', row: '1/3' },
+                    { col: '3/4', row: '2/3' },
+                    { col: '4/6', row: '2/4', circle: true },
+                    { col: '6/7', row: '3/4' },
+                    { col: '1/2', row: '3/5' },
+                    { col: '2/4', row: '3/5' },
+                    { col: '4/5', row: '4/5' },
+                    { col: '5/7', row: '4/5' },
+                ]
+            },
+            {
+                name: 'Mosaic',
+                type: 'grid',
+                cols: '1.2fr 1fr 1fr 1.2fr',
+                rows: '1fr 1fr 1.3fr 1fr',
+                cells: [
+                    { col: '1/2', row: '1/3' },
+                    { col: '2/3', row: '1/2' },
+                    { col: '3/5', row: '1/2' },
+                    { col: '2/3', row: '2/3' },
+                    { col: '3/4', row: '2/3' },
+                    { col: '4/5', row: '2/3' },
+                    { col: '1/2', row: '3/4' },
+                    { col: '2/4', row: '3/4' },
+                    { col: '4/5', row: '3/5' },
+                    { col: '1/3', row: '4/5' },
+                    { col: '3/4', row: '4/5' },
+                ]
+            },
+            {
+                name: 'Asymmetric',
+                type: 'grid',
+                cols: 'repeat(4, 1fr)',
+                rows: 'repeat(3, 1fr)',
+                cells: [
+                    { col: '1/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
+                    { col: '1/2', row: '2/3' }, { col: '2/4', row: '2/4' },
+                    { col: '4/5', row: '2/3' },
+                    { col: '1/2', row: '3/4' }, { col: '4/5', row: '3/4' },
+                ]
+            },
+            {
+                name: 'Wide Strip',
+                type: 'grid',
+                cols: 'repeat(3, 1fr)',
+                rows: '2fr 1fr 2fr',
+                cells: [
+                    { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' },
+                    { col: '1/4', row: '2/3' },
+                    { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' },
+                ]
+            },
+            {
+                name: 'Duo',
+                type: 'grid',
+                cols: 'repeat(4, 1fr)',
+                rows: 'repeat(2, 1fr)',
+                cells: [
+                    { col: '1/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
+                    { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }, { col: '3/5', row: '2/3' },
+                ]
+            },
+            {
+                name: 'Quad',
+                type: 'grid',
+                cols: 'repeat(2, 1fr)',
+                rows: 'repeat(2, 1fr)',
+                cells: [
+                    { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' },
+                    { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' },
+                ]
+            },
+        ];
+
+        /**
+         * @typedef {Object} Color
+         * @property {string} name
+         * @property {string} css
+         */
+
+        /** @type {Color[]} */
+        const COLORS = [
+            { name: 'White', css: '#ffffff' },
+            { name: 'Snow', css: '#f2f2f2' },
+            { name: 'Silver', css: '#d0d0d0' },
+            { name: 'Charcoal', css: '#3a3a3a' },
+            { name: 'Black', css: '#0a0a0a' },
+            { name: 'Blush', css: 'linear-gradient(135deg, #d4a0b0 0%, #e8cdb5 100%)' },
+            { name: 'Sky', css: 'linear-gradient(135deg, #92b8d8 0%, #c0d8ee 100%)' },
+            { name: 'Sage', css: 'linear-gradient(135deg, #9aba92 0%, #c4ddb8 100%)' },
+            { name: 'Peach', css: 'linear-gradient(135deg, #e8b888 0%, #f0d8b8 100%)' },
+            { name: 'Lavender', css: 'linear-gradient(135deg, #b098cc 0%, #d0c0e8 100%)' },
+            { name: 'Midnight', css: 'linear-gradient(135deg, #141428 0%, #1a2840 100%)' },
+            { name: 'Wine', css: 'linear-gradient(135deg, #3e0e22 0%, #681838 100%)' },
+        ];
+
+        /** @type {number} */
+        let activeLayout = 0;
+        /** @type {Array} */
+        let images = [];
+        /** @type {Array} */
+        let cellAssignments = [];
+        /** @type {number|null} */
+        let pendingCellIndex = null;
+        /** @type {number} */
+        let activeBg = 0;
+        /** @type {number} */
+        let gridWidth = 100;
+
+        /** @type {HTMLElement} */
+        const picker = document.getElementById('picker');
+        /** @type {HTMLElement} */
+        const container = document.getElementById('collage-container');
+        /** @type {HTMLElement} */
+        const wrapper = document.getElementById('download-wrapper');
+        /** @type {HTMLElement} */
+        const btnUpload = document.getElementById('btn-upload');
+        /** @type {HTMLElement} */
+        const btnClear = document.getElementById('btn-clear');
+        /** @type {HTMLElement} */
+        const btnDownload = document.getElementById('btn-download');
+        /** @type {HTMLElement} */
+        const fileInput = document.getElementById('file-input');
+        /** @type {HTMLElement} */
+        const statusEl = document.getElementById('status');
+        /** @type {HTMLElement} */
+        const paletteEl = document.getElementById('palette');
+        /** @type {HTMLElement} */
+        const widthSlider = document.getElementById('width-slider');
+        /** @type {HTMLElement} */
+        const widthVal = document.getElementById('width-val');
+
+        LAYOUTS.forEach((layout, i) => {
+            const thumb = document.createElement('div');
+            thumb.className = 'layout-thumb' + (i === 0 ? ' active' : '');
+            thumb.title = layout.name;
+
+            if (layout.type === 'diamond') {
+                const wrap = document.createElement('div');
+                wrap.className = 'mini-diamond-wrap';
+                layout.diamonds.forEach(d => {
+                    const el = document.createElement('div');
+                    el.className = 'mini-diamond';
+                    const sz = d.size * 0.35;
+                    const szH = sz * 1.78;
+                    el.style.cssText = `width:${sz}%;height:${szH}%;left:${d.x * 0.9 - sz / 2 + 4}%;top:${d.y * 0.9 - szH / 2 + 2}%;`;
+                    wrap.appendChild(el);
+                });
+                thumb.appendChild(wrap);
+            } else {
+                const miniGrid = document.createElement('div');
+                miniGrid.className = 'mini-grid';
+                miniGrid.style.gridTemplateColumns = layout.cols;
+                miniGrid.style.gridTemplateRows = layout.rows;
+                layout.cells.forEach(c => {
+                    const el = document.createElement('div');
+                    el.className = 'cell' + (c.circle ? ' circle' : '');
+                    el.style.gridColumn = c.col;
+                    el.style.gridRow = c.row;
+                    if (c.circle) {
+                        el.style.display = 'flex';
+                        el.style.alignItems = 'center';
+                        el.style.justifyContent = 'center';
+                        el.style.background = 'transparent';
+                        const dot = document.createElement('div');
+                        dot.style.cssText = 'aspect-ratio:1;max-width:100%;max-height:100%;border-radius:50%;background:#e8e8e8;width:100%;';
+                        el.appendChild(dot);
+                    }
+                    miniGrid.appendChild(el);
+                });
+                thumb.appendChild(miniGrid);
+            }
+
+            const badge = document.createElement('div');
+            badge.className = 'count-badge';
+            badge.textContent = getCellCount(layout);
+            thumb.appendChild(badge);
+
+            thumb.addEventListener('click', () => selectLayout(i));
+            picker.appendChild(thumb);
+        });
+
+        /**
+         * @param {Layout} l
+         * @returns {number}
+         */
+        function getCellCount (l) {
+            return l.type === 'diamond' ? l.count : l.cells.length;
+        }
+
+        COLORS.forEach((c, i) => {
+            const sw = document.createElement('div');
+            sw.className = 'swatch' + (i === 0 ? ' active' : '');
+            sw.title = c.name;
+            sw.style.background = c.css;
+            sw.addEventListener('click', () => {
+                activeBg = i;
+                document.querySelectorAll('.swatch').forEach((s, j) => s.classList.toggle('active', j === i));
+                applyBg();
+            });
+            paletteEl.appendChild(sw);
+        });
+
+        /**
+         * Applies background color to wrapper
+         */
+        function applyBg () {
+            wrapper.style.background = COLORS[activeBg].css;
+        }
+
+        widthSlider.addEventListener('input', (e) => {
+            gridWidth = parseInt(e.target.value);
+            widthVal.textContent = gridWidth + '%';
+            applyWidth();
+        });
+
+        /**
+         * Applies width to container
+         */
+        function applyWidth () {
+            container.style.width = gridWidth + '%';
+            container.style.height = gridWidth + '%';
+        }
+
+        /**
+         * Selects a layout and initializes grid
+         * @param {number} idx
+         */
+        function selectLayout (idx) {
+            activeLayout = idx;
+            document.querySelectorAll('.layout-thumb').forEach((t, j) => t.classList.toggle('active', j === idx));
+
+            const layout = LAYOUTS[idx];
+            cellAssignments = new Array(getCellCount(layout)).fill(null);
+
+            wrapper.style.aspectRatio = layout.aspect || '4 / 3';
+
+            renderGrid();
+            updateStatus();
+        }
+
+        /**
+         * Renders the grid based on current layout
+         */
+        function renderGrid () {
+            const layout = LAYOUTS[activeLayout];
+            container.innerHTML = '';
+
+            if (layout.type === 'diamond') {
+                container.classList.add('diamond-mode');
+                container.style.gridTemplateColumns = '';
+                container.style.gridTemplateRows = '';
+                renderDiamond(layout);
+            } else {
+                container.classList.remove('diamond-mode');
+                container.style.display = 'grid';
+                container.style.gridTemplateColumns = layout.cols;
+                container.style.gridTemplateRows = layout.rows;
+                container.style.gap = 'var(--gap)';
+                container.style.padding = 'var(--gap)';
+                renderCells(layout);
+            }
+
+            applyWidth();
+        }
+
+        /**
+         * Renders grid cells
+         * @param {Layout} layout
+         */
+        function renderCells (layout) {
+            layout.cells.forEach((def, i) => {
+                const cell = document.createElement('div');
+                cell.className = 'collage-cell' + (def.circle ? ' circle-cell' : '');
+                cell.style.gridColumn = def.col;
+                cell.style.gridRow = def.row;
+
+                if (def.circle) {
+                    buildCircleCell(cell, i);
+                } else {
+                    buildNormalCell(cell, i);
+                }
+                container.appendChild(cell);
+            });
+        }
+
+        /**
+         * Builds a normal grid cell
+         * @param {HTMLElement} cell
+         * @param {number} i
+         */
+        function buildNormalCell (cell, i) {
+            if (cellAssignments[i] !== null && images[cellAssignments[i]]) {
+                cell.classList.add('filled');
+                const img = document.createElement('img');
+                img.src = images[cellAssignments[i]].dataUrl;
+                img.draggable = false;
+                cell.appendChild(img);
+                cell.appendChild(makeRemoveBtn(i));
+            } else {
+                cell.innerHTML = PLACEHOLDER;
+                cell.addEventListener('click', () => { pendingCellIndex = i; fileInput.click(); });
+            }
+        }
+
+        /**
+         * Builds a circle cell
+         * @param {HTMLElement} cell
+         * @param {number} i
+         */
+        function buildCircleCell (cell, i) {
+            const mask = document.createElement('div');
+            mask.className = 'circle-mask';
+
+            if (cellAssignments[i] !== null && images[cellAssignments[i]]) {
+                cell.classList.add('filled');
+                const img = document.createElement('img');
+                img.src = images[cellAssignments[i]].dataUrl;
+                img.draggable = false;
+                mask.appendChild(img);
+                const rm = makeRemoveBtn(i);
+                mask.appendChild(rm);
+            } else {
+                mask.innerHTML = PLACEHOLDER;
+                cell.addEventListener('click', () => { pendingCellIndex = i; fileInput.click(); });
+            }
+            cell.appendChild(mask);
+        }
+
+        /**
+         * Renders diamond layout cells
+         * @param {Layout} layout
+         */
+        function renderDiamond (layout) {
+            layout.diamonds.forEach((d, i) => {
+                const cell = document.createElement('div');
+                cell.className = 'diamond-cell';
+
+                const sz = d.size;
+                cell.style.width = sz + '%';
+                cell.style.height = '0';
+                cell.style.paddingBottom = sz + '%';
+                cell.style.left = (d.x - sz / 2) + '%';
+                cell.style.top = (d.y - sz / 2) + '%';
+
+                const inner = document.createElement('div');
+                inner.className = 'diamond-inner';
+
+                if (cellAssignments[i] !== null && images[cellAssignments[i]]) {
+                    cell.classList.add('filled');
+                    const img = document.createElement('img');
+                    img.src = images[cellAssignments[i]].dataUrl;
+                    img.draggable = false;
+                    inner.appendChild(img);
+                    inner.appendChild(makeRemoveBtn(i));
+                } else {
+                    inner.innerHTML = PLACEHOLDER;
+                    cell.addEventListener('click', () => { pendingCellIndex = i; fileInput.click(); });
+                }
+
+                cell.appendChild(inner);
+                container.appendChild(cell);
+            });
+        }
+
+        /** @type {string} */
+        const PLACEHOLDER = `<div class="cell-placeholder"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></div>`;
+
+        /**
+         * Creates a remove button for a cell
+         * @param {number} i
+         * @returns {HTMLElement}
+         */
+        function makeRemoveBtn (i) {
+            const btn = document.createElement('button');
+            btn.className = 'cell-remove';
+            btn.innerHTML = '✕';
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                cellAssignments[i] = null;
+                renderGrid();
+                updateStatus();
+            });
+            return btn;
+        }
+
+        /**
+         * Updates status display
+         */
+        function updateStatus () {
+            const total = getCellCount(LAYOUTS[activeLayout]);
+            const filled = cellAssignments.filter(a => a !== null).length;
+            statusEl.innerHTML = `<strong>${filled}</strong> / ${total} images placed`;
+            btnDownload.disabled = filled < total;
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+
+            if (pendingCellIndex !== null) {
+                readFile(files[0], (idx) => {
+                    cellAssignments[pendingCellIndex] = idx;
+                    pendingCellIndex = null;
+                    renderGrid();
+                    updateStatus();
+                });
+                files.slice(1).forEach(f => enqueueFile(f));
+            } else {
+                files.forEach(f => enqueueFile(f));
+            }
+            fileInput.value = '';
+        });
+
+        /**
+         * Reads a file and calls callback with image index
+         * @param {File} file
+         * @param {Function} cb
+         */
+        function readFile (file, cb) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const idx = images.length;
+                images.push({ dataUrl: ev.target.result });
+                cb(idx);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        /**
+         * Enqueues a file to be added to next available slot
+         * @param {File} file
+         */
+        function enqueueFile (file) {
+            readFile(file, (idx) => {
+                const slot = cellAssignments.indexOf(null);
+                if (slot !== -1) {
+                    cellAssignments[slot] = idx;
+                    renderGrid();
+                    updateStatus();
+                }
+            });
+        }
+
+        btnUpload.addEventListener('click', () => { pendingCellIndex = null; fileInput.click(); });
+
+        btnClear.addEventListener('click', () => {
+            images = [];
+            cellAssignments = new Array(getCellCount(LAYOUTS[activeLayout])).fill(null);
+            renderGrid();
+            updateStatus();
+        });
+
+        /**
+         * Handles download of collage
+         */
+        btnDownload.addEventListener('click', async () => {
+            btnDownload.textContent = 'Exporting…';
+            btnDownload.disabled = true;
+
+            const savedBorder = wrapper.style.border;
+            const savedRadius = wrapper.style.borderRadius;
+            wrapper.style.border = 'none';
+            wrapper.style.borderRadius = '0';
+
+            try {
+                const canvas = await html2canvas(wrapper, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: null,
+                });
+                const link = document.createElement('a');
+                link.download = 'collage.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (err) {
+                console.error('Export error:', err);
+                alert('Export failed — please try again.');
+            }
+
+            wrapper.style.border = savedBorder;
+            wrapper.style.borderRadius = savedRadius;
+            btnDownload.textContent = 'Download Collage';
+            updateStatus();
+        });
+
+        applyBg();
+        selectLayout(0);
+    </script>
+</body>
+
+</html>
