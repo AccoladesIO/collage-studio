@@ -1,0 +1,18 @@
+{
+    "name": "Collage Studio",
+    "short_name": "Collage",
+    "description": "A minimalist photo collage builder — upload, arrange, download.",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#fafafa",
+    "theme_color": "#111111",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%23111'/%3E%3Crect x='40' y='40' width='200' height='200' rx='16' fill='%23fff' opacity='.9'/%3E%3Crect x='270' y='40' width='200' height='90' rx='16' fill='%23fff' opacity='.7'/%3E%3Crect x='270' y='160' width='200' height='80' rx='16' fill='%23fff' opacity='.5'/%3E%3Crect x='40' y='270' width='130' height='200' rx='16' fill='%23fff' opacity='.6'/%3E%3Crect x='200' y='270' width='270' height='200' rx='16' fill='%23fff' opacity='.8'/%3E%3C/svg%3E",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

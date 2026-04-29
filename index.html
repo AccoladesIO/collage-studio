@@ -5,6 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Collage Studio</title>
+    <meta name="description" content="A minimalist photo collage builder — upload, arrange, download.">
+    <meta name="theme-color" content="#111111">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Collage Studio">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%23111'/%3E%3Crect x='40' y='40' width='200' height='200' rx='16' fill='%23fff' opacity='.9'/%3E%3Crect x='270' y='40' width='200' height='90' rx='16' fill='%23fff' opacity='.7'/%3E%3Crect x='270' y='160' width='200' height='80' rx='16' fill='%23fff' opacity='.5'/%3E%3Crect x='40' y='270' width='130' height='200' rx='16' fill='%23fff' opacity='.6'/%3E%3Crect x='200' y='270' width='270' height='200' rx='16' fill='%23fff' opacity='.8'/%3E%3C/svg%3E">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Instrument+Serif:ital@0;1&display=swap');
@@ -78,7 +86,6 @@
             font-weight: 500;
         }
 
-        /** Layout Picker */
         .picker-wrap {
             padding: 24px 48px 0;
         }
@@ -171,11 +178,10 @@
             transform: rotate(45deg);
         }
 
-        /** Controls */
         .controls-wrap {
             padding: 20px 48px 0;
             display: flex;
-            gap: 40px;
+            gap: 32px;
             flex-wrap: wrap;
             align-items: flex-start;
         }
@@ -219,17 +225,17 @@
             gap: 10px;
         }
 
-        .width-control input[type="range"] {
+        .range-input {
             -webkit-appearance: none;
             appearance: none;
-            width: 130px;
+            width: 120px;
             height: 4px;
             background: var(--border);
             border-radius: 2px;
             outline: none;
         }
 
-        .width-control input[type="range"]::-webkit-slider-thumb {
+        .range-input::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 14px;
             height: 14px;
@@ -238,7 +244,7 @@
             cursor: pointer;
         }
 
-        .width-control input[type="range"]::-moz-range-thumb {
+        .range-input::-moz-range-thumb {
             width: 14px;
             height: 14px;
             border-radius: 50%;
@@ -254,9 +260,152 @@
             color: var(--text-muted);
         }
 
-        /** Main Canvas */
+        .wm-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-track {
+            width: 34px;
+            height: 18px;
+            border-radius: 9px;
+            background: var(--border);
+            position: relative;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .toggle-track.on {
+            background: var(--accent);
+        }
+
+        .toggle-knob {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--surface);
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: left 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        }
+
+        .toggle-track.on .toggle-knob {
+            left: 18px;
+        }
+
+        .toggle-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .wm-input {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.78rem;
+            padding: 5px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--text);
+            outline: none;
+            width: 150px;
+            transition: border-color 0.2s;
+        }
+
+        .wm-input:focus {
+            border-color: var(--accent);
+        }
+
+        .wm-input:disabled {
+            opacity: 0.35;
+        }
+
+        .wm-pos-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .wm-pos-btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border: 1.5px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+            letter-spacing: 0.03em;
+        }
+
+        .wm-pos-btn:hover {
+            border-color: var(--border-hover);
+        }
+
+        .wm-pos-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .wm-pos-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .watermark-overlay {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            color: rgba(255, 255, 255, 0.7);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+            padding: 10px 14px;
+            white-space: nowrap;
+        }
+
+        .watermark-overlay.pos-bl {
+            bottom: 0;
+            left: 0;
+        }
+
+        .watermark-overlay.pos-br {
+            bottom: 0;
+            right: 0;
+        }
+
+        .watermark-overlay.pos-tl {
+            top: 0;
+            left: 0;
+        }
+
+        .watermark-overlay.pos-tr {
+            top: 0;
+            right: 0;
+        }
+
+        .watermark-overlay.pos-c {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
         .canvas-wrap {
-            padding: 24px 48px 40px;
+            padding: 24px 48px 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -287,7 +436,6 @@
             overflow: hidden;
         }
 
-        /** Grid Cells */
         .collage-cell {
             background: rgba(0, 0, 0, 0.06);
             border-radius: 3px;
@@ -295,9 +443,6 @@
             position: relative;
             cursor: pointer;
             transition: background 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             min-width: 0;
             min-height: 0;
         }
@@ -315,17 +460,21 @@
         }
 
         .collage-cell img {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center center;
             display: block;
         }
 
         .cell-placeholder {
+            position: absolute;
+            inset: 0;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 2px;
+            justify-content: center;
             color: rgba(0, 0, 0, 0.18);
             pointer-events: none;
         }
@@ -360,7 +509,6 @@
             background: rgba(0, 0, 0, 0.8);
         }
 
-        /** Circle cell — PERFECT CIRCLE */
         .collage-cell.circle-cell {
             background: transparent !important;
             overflow: visible;
@@ -370,13 +518,12 @@
             aspect-ratio: 1 / 1;
             max-width: 100%;
             max-height: 100%;
+            width: 100%;
             border-radius: 50%;
             overflow: hidden;
             background: rgba(0, 0, 0, 0.06);
-            display: flex;
-            align-items: center;
-            justify-content: center;
             position: relative;
+            margin: auto;
         }
 
         .collage-cell.circle-cell:hover .circle-mask {
@@ -388,21 +535,28 @@
         }
 
         .circle-mask img {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center center;
+        }
+
+        .circle-mask .cell-placeholder {
             position: absolute;
             inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .circle-mask .cell-remove {
             position: absolute;
-            top: 50%;
-            right: 50%;
-            transform: translate(50%, -150%);
+            top: 8px;
+            right: 8px;
         }
 
-        /** Diamond Layout */
         #collage-container.diamond-mode {
             display: block !important;
             padding: 0 !important;
@@ -425,41 +579,49 @@
 
         .diamond-cell.filled {
             cursor: default;
+            background: transparent;
         }
 
         .diamond-cell.filled:hover {
-            background: rgba(0, 0, 0, 0.06);
+            background: transparent;
         }
 
         .diamond-cell .diamond-inner {
             position: absolute;
             inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             overflow: hidden;
             border-radius: inherit;
         }
 
-        .diamond-cell img {
-            transform: rotate(-45deg) scale(1.45);
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
+        .diamond-cell .diamond-inner .diamond-bg {
+            position: absolute;
+            width: 142%;
+            height: 142%;
+            top: 50%;
+            left: 50%;
+            transform: rotate(-45deg) translate(-50%, -50%);
+            transform-origin: top left;
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
         }
 
         .diamond-cell .cell-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transform: rotate(-45deg);
         }
 
         .diamond-cell .cell-remove {
-            transform: rotate(-45deg);
+            position: absolute;
             top: 35%;
             right: 35%;
+            transform: rotate(-45deg);
         }
 
-        /** Actions */
         .actions {
             display: flex;
             gap: 10px;
@@ -505,12 +667,63 @@
             display: none;
         }
 
+        footer {
+            text-align: center;
+            padding: 16px 48px 28px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+        }
+
+        footer span {
+            color: #e25555;
+        }
+
+        .install-banner {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .install-banner:hover {
+            transform: translateX(-50%) scale(1.03);
+        }
+
+        .install-banner .close-install {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0 0 0 8px;
+        }
+
         @media (max-width: 640px) {
 
             header,
             .picker-wrap,
             .controls-wrap,
             .canvas-wrap {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            footer {
                 padding-left: 16px;
                 padding-right: 16px;
             }
@@ -525,7 +738,11 @@
             }
 
             .controls-wrap {
-                gap: 20px;
+                gap: 16px;
+            }
+
+            .wm-input {
+                width: 120px;
             }
         }
     </style>
@@ -551,8 +768,27 @@
         <div class="control-group">
             <div class="section-label">Grid Width</div>
             <div class="width-control">
-                <input type="range" id="width-slider" min="50" max="100" value="100" step="5">
+                <input type="range" class="range-input" id="width-slider" min="50" max="100" value="100" step="5">
                 <span class="width-val" id="width-val">100%</span>
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="section-label">Watermark</div>
+            <div class="wm-row">
+                <div class="toggle-wrap" id="wm-toggle">
+                    <div class="toggle-track" id="wm-track">
+                        <div class="toggle-knob"></div>
+                    </div>
+                    <span class="toggle-label">Off</span>
+                </div>
+                <input type="text" class="wm-input" id="wm-text" placeholder="Your text here…" disabled maxlength="60">
+                <div class="wm-pos-group" id="wm-pos-group">
+                    <button class="wm-pos-btn active" data-pos="br" disabled>BR</button>
+                    <button class="wm-pos-btn" data-pos="bl" disabled>BL</button>
+                    <button class="wm-pos-btn" data-pos="tr" disabled>TR</button>
+                    <button class="wm-pos-btn" data-pos="tl" disabled>TL</button>
+                    <button class="wm-pos-btn" data-pos="c" disabled>C</button>
+                </div>
             </div>
         </div>
     </div>
@@ -560,6 +796,7 @@
     <div class="canvas-wrap">
         <div id="download-wrapper">
             <div id="collage-container"></div>
+            <div class="watermark-overlay pos-br" id="watermark" style="display:none;"></div>
         </div>
         <div class="actions">
             <button class="btn" id="btn-upload">Upload Images</button>
@@ -568,22 +805,22 @@
         </div>
     </div>
 
+    <footer>Built with <span>❤️</span> by Accolades</footer>
+
+    <div class="install-banner" id="install-banner">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12l7 7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Install Collage Studio
+        <button class="close-install" id="close-install">✕</button>
+    </div>
+
     <input type="file" id="file-input" multiple accept="image/*">
 
     <script>
         /**
-         * @typedef {Object} Layout
-         * @property {string} name
-         * @property {string} type
-         * @property {string} [aspect]
-         * @property {number} [count]
-         * @property {Array} [diamonds]
-         * @property {string} [cols]
-         * @property {string} [rows]
-         * @property {Array} [cells]
+         * Layout configurations for collage templates
          */
-
-        /** @type {Layout[]} */
         const LAYOUTS = [
             {
                 name: 'Diamond',
@@ -603,8 +840,7 @@
             {
                 name: 'Classic Grid',
                 type: 'grid',
-                cols: 'repeat(3, 1fr)',
-                rows: 'repeat(3, 1fr)',
+                cols: 'repeat(3, 1fr)', rows: 'repeat(3, 1fr)',
                 cells: [
                     { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' },
                     { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }, { col: '3/4', row: '2/3' },
@@ -614,8 +850,7 @@
             {
                 name: 'Hero Left',
                 type: 'grid',
-                cols: 'repeat(4, 1fr)',
-                rows: 'repeat(3, 1fr)',
+                cols: 'repeat(4, 1fr)', rows: 'repeat(3, 1fr)',
                 cells: [
                     { col: '1/3', row: '1/3' },
                     { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
@@ -626,8 +861,7 @@
             {
                 name: 'Focus Center',
                 type: 'grid',
-                cols: 'repeat(4, 1fr)',
-                rows: 'repeat(3, 1fr)',
+                cols: 'repeat(4, 1fr)', rows: 'repeat(3, 1fr)',
                 cells: [
                     { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
                     { col: '1/2', row: '2/3' }, { col: '2/4', row: '2/3', circle: true }, { col: '4/5', row: '2/3' },
@@ -637,8 +871,7 @@
             {
                 name: 'Magazine',
                 type: 'grid',
-                cols: '2fr 1fr 1fr 1fr 1fr 2fr',
-                rows: 'repeat(4, 1fr)',
+                cols: '2fr 1fr 1fr 1fr 1fr 2fr', rows: 'repeat(4, 1fr)',
                 cells: [
                     { col: '1/3', row: '1/3' },
                     { col: '3/4', row: '1/2' },
@@ -657,8 +890,7 @@
             {
                 name: 'Mosaic',
                 type: 'grid',
-                cols: '1.2fr 1fr 1fr 1.2fr',
-                rows: '1fr 1fr 1.3fr 1fr',
+                cols: '1.2fr 1fr 1fr 1.2fr', rows: '1fr 1fr 1.3fr 1fr',
                 cells: [
                     { col: '1/2', row: '1/3' },
                     { col: '2/3', row: '1/2' },
@@ -676,8 +908,7 @@
             {
                 name: 'Asymmetric',
                 type: 'grid',
-                cols: 'repeat(4, 1fr)',
-                rows: 'repeat(3, 1fr)',
+                cols: 'repeat(4, 1fr)', rows: 'repeat(3, 1fr)',
                 cells: [
                     { col: '1/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
                     { col: '1/2', row: '2/3' }, { col: '2/4', row: '2/4' },
@@ -688,8 +919,7 @@
             {
                 name: 'Wide Strip',
                 type: 'grid',
-                cols: 'repeat(3, 1fr)',
-                rows: '2fr 1fr 2fr',
+                cols: 'repeat(3, 1fr)', rows: '2fr 1fr 2fr',
                 cells: [
                     { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' },
                     { col: '1/4', row: '2/3' },
@@ -699,8 +929,7 @@
             {
                 name: 'Duo',
                 type: 'grid',
-                cols: 'repeat(4, 1fr)',
-                rows: 'repeat(2, 1fr)',
+                cols: 'repeat(4, 1fr)', rows: 'repeat(2, 1fr)',
                 cells: [
                     { col: '1/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
                     { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }, { col: '3/5', row: '2/3' },
@@ -709,8 +938,7 @@
             {
                 name: 'Quad',
                 type: 'grid',
-                cols: 'repeat(2, 1fr)',
-                rows: 'repeat(2, 1fr)',
+                cols: 'repeat(2, 1fr)', rows: 'repeat(2, 1fr)',
                 cells: [
                     { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' },
                     { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' },
@@ -719,71 +947,56 @@
         ];
 
         /**
-         * @typedef {Object} Color
-         * @property {string} name
-         * @property {string} css
+         * Color palette configurations for backgrounds
          */
-
-        /** @type {Color[]} */
         const COLORS = [
-                { name: 'White', css: '#ffffff' },
-                { name: 'Snow', css: '#f2f2f2' },
-                { name: 'Silver', css: '#d0d0d0' },
-                { name: 'Charcoal', css: '#3a3a3a' },
-                { name: 'Black', css: '#0a0a0a' },
-                { name: 'Blush', css: 'linear-gradient(135deg, #d4a0b0 0%, #e8cdb5 100%)' },
-                { name: 'Sky', css: 'linear-gradient(135deg, #92b8d8 0%, #c0d8ee 100%)' },
-                { name: 'Sage', css: 'linear-gradient(135deg, #9aba92 0%, #c4ddb8 100%)' },
-                { name: 'Peach', css: 'linear-gradient(135deg, #e8b888 0%, #f0d8b8 100%)' },
-                { name: 'Lavender', css: 'linear-gradient(135deg, #b098cc 0%, #d0c0e8 100%)' },
-                { name: 'Midnight', css: 'linear-gradient(135deg, #141428 0%, #1a2840 100%)' },
-                { name: 'Wine', css: 'linear-gradient(135deg, #3e0e22 0%, #681838 100%)' },
-                { name: 'Cloud', css: 'radial-gradient(circle, #ffffff 0%, #e1e8ee 100%)' },
-                { name: 'Petal', css: 'radial-gradient(circle, #fff5f7 0%, #fce4ec 100%)' },
-                { name: 'Mint Glow', css: 'radial-gradient(circle, #f0fff4 0%, #c6f6d5 100%)' },
-                { name: 'Sunset Silk', css: 'linear-gradient(to right, #ffecd2 0%, #fcb69f 100%)' },
-                { name: 'Twilight', css: 'linear-gradient(to bottom right, #a1c4fd 0%, #c2e9fb 100%)' },
-                { name: 'Sand', css: 'radial-gradient(circle, #fdfbfb 0%, #ebedee 100%)' },
-                { name: 'Heather', css: 'linear-gradient(135deg, #e9defa 0%, #fbfcdb 100%)' },
-                { name: 'Ocean Mist', css: 'radial-gradient(circle, #e0f7fa 0%, #80deea 100%)' }
-            ];
+            { name: 'White', css: '#ffffff' },
+            { name: 'Snow', css: '#f2f2f2' },
+            { name: 'Silver', css: '#d0d0d0' },
+            { name: 'Charcoal', css: '#3a3a3a' },
+            { name: 'Black', css: '#0a0a0a' },
+            { name: 'Blush', css: 'linear-gradient(135deg, #d4a0b0 0%, #e8cdb5 100%)' },
+            { name: 'Sky', css: 'linear-gradient(135deg, #92b8d8 0%, #c0d8ee 100%)' },
+            { name: 'Sage', css: 'linear-gradient(135deg, #9aba92 0%, #c4ddb8 100%)' },
+            { name: 'Peach', css: 'linear-gradient(135deg, #e8b888 0%, #f0d8b8 100%)' },
+            { name: 'Lavender', css: 'linear-gradient(135deg, #b098cc 0%, #d0c0e8 100%)' },
+            { name: 'Midnight', css: 'linear-gradient(135deg, #141428 0%, #1a2840 100%)' },
+            { name: 'Wine', css: 'linear-gradient(135deg, #3e0e22 0%, #681838 100%)' },
+        ];
 
-        /** @type {number} */
+        /**
+         * Application state
+         */
         let activeLayout = 0;
-        /** @type {Array} */
         let images = [];
-        /** @type {Array} */
         let cellAssignments = [];
-        /** @type {number|null} */
         let pendingCellIndex = null;
-        /** @type {number} */
         let activeBg = 0;
-        /** @type {number} */
         let gridWidth = 100;
+        let wmEnabled = false;
+        let wmText = '';
+        let wmPosition = 'br';
 
-        /** @type {HTMLElement} */
         const picker = document.getElementById('picker');
-        /** @type {HTMLElement} */
         const container = document.getElementById('collage-container');
-        /** @type {HTMLElement} */
         const wrapper = document.getElementById('download-wrapper');
-        /** @type {HTMLElement} */
         const btnUpload = document.getElementById('btn-upload');
-        /** @type {HTMLElement} */
         const btnClear = document.getElementById('btn-clear');
-        /** @type {HTMLElement} */
         const btnDownload = document.getElementById('btn-download');
-        /** @type {HTMLElement} */
         const fileInput = document.getElementById('file-input');
-        /** @type {HTMLElement} */
         const statusEl = document.getElementById('status');
-        /** @type {HTMLElement} */
         const paletteEl = document.getElementById('palette');
-        /** @type {HTMLElement} */
         const widthSlider = document.getElementById('width-slider');
-        /** @type {HTMLElement} */
-        const widthVal = document.getElementById('width-val');
+        const widthValEl = document.getElementById('width-val');
+        const wmToggle = document.getElementById('wm-toggle');
+        const wmTrack = document.getElementById('wm-track');
+        const wmInput = document.getElementById('wm-text');
+        const wmPosGroup = document.getElementById('wm-pos-group');
+        const wmOverlay = document.getElementById('watermark');
 
+        /**
+         * Initialize layout picker thumbnails
+         */
         LAYOUTS.forEach((layout, i) => {
             const thumb = document.createElement('div');
             thumb.className = 'layout-thumb' + (i === 0 ? ' active' : '');
@@ -835,13 +1048,17 @@
         });
 
         /**
-         * @param {Layout} l
-         * @returns {number}
+         * Get cell count for a layout
+         * @param {Object} l - Layout object
+         * @returns {number} Number of cells
          */
         function getCellCount (l) {
             return l.type === 'diamond' ? l.count : l.cells.length;
         }
 
+        /**
+         * Initialize color palette swatches
+         */
         COLORS.forEach((c, i) => {
             const sw = document.createElement('div');
             sw.className = 'swatch' + (i === 0 ? ' active' : '');
@@ -856,20 +1073,23 @@
         });
 
         /**
-         * Applies background color to wrapper
+         * Apply background color to wrapper
          */
         function applyBg () {
             wrapper.style.background = COLORS[activeBg].css;
         }
 
+        /**
+         * Handle width slider input
+         */
         widthSlider.addEventListener('input', (e) => {
             gridWidth = parseInt(e.target.value);
-            widthVal.textContent = gridWidth + '%';
+            widthValEl.textContent = gridWidth + '%';
             applyWidth();
         });
 
         /**
-         * Applies width to container
+         * Apply grid width
          */
         function applyWidth () {
             container.style.width = gridWidth + '%';
@@ -877,24 +1097,67 @@
         }
 
         /**
-         * Selects a layout and initializes grid
-         * @param {number} idx
+         * Toggle watermark enabled state
+         */
+        wmToggle.addEventListener('click', () => {
+            wmEnabled = !wmEnabled;
+            wmTrack.classList.toggle('on', wmEnabled);
+            wmToggle.querySelector('.toggle-label').textContent = wmEnabled ? 'On' : 'Off';
+            wmInput.disabled = !wmEnabled;
+            wmPosGroup.querySelectorAll('.wm-pos-btn').forEach(b => b.disabled = !wmEnabled);
+            updateWatermark();
+        });
+
+        /**
+         * Handle watermark text input
+         */
+        wmInput.addEventListener('input', (e) => {
+            wmText = e.target.value;
+            updateWatermark();
+        });
+
+        /**
+         * Handle watermark position button clicks
+         */
+        wmPosGroup.addEventListener('click', (e) => {
+            const btn = e.target.closest('.wm-pos-btn');
+            if (!btn || btn.disabled) return;
+            wmPosition = btn.dataset.pos;
+            wmPosGroup.querySelectorAll('.wm-pos-btn').forEach(b => b.classList.toggle('active', b.dataset.pos === wmPosition));
+            updateWatermark();
+        });
+
+        /**
+         * Update watermark overlay display
+         */
+        function updateWatermark () {
+            if (!wmEnabled || !wmText.trim()) {
+                wmOverlay.style.display = 'none';
+                return;
+            }
+            wmOverlay.style.display = 'block';
+            wmOverlay.textContent = wmText;
+            wmOverlay.className = 'watermark-overlay pos-' + wmPosition;
+        }
+
+        /**
+         * Select a layout by index
+         * @param {number} idx - Layout index
          */
         function selectLayout (idx) {
             activeLayout = idx;
             document.querySelectorAll('.layout-thumb').forEach((t, j) => t.classList.toggle('active', j === idx));
-
             const layout = LAYOUTS[idx];
             cellAssignments = new Array(getCellCount(layout)).fill(null);
-
             wrapper.style.aspectRatio = layout.aspect || '4 / 3';
-
             renderGrid();
             updateStatus();
         }
 
+        const PLACEHOLDER = `<div class="cell-placeholder"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></div>`;
+
         /**
-         * Renders the grid based on current layout
+         * Render the grid based on current layout
          */
         function renderGrid () {
             const layout = LAYOUTS[activeLayout];
@@ -914,13 +1177,12 @@
                 container.style.padding = 'var(--gap)';
                 renderCells(layout);
             }
-
             applyWidth();
         }
 
         /**
-         * Renders grid cells
-         * @param {Layout} layout
+         * Render regular grid cells
+         * @param {Object} layout - Layout configuration
          */
         function renderCells (layout) {
             layout.cells.forEach((def, i) => {
@@ -939,9 +1201,9 @@
         }
 
         /**
-         * Builds a normal grid cell
-         * @param {HTMLElement} cell
-         * @param {number} i
+         * Build a normal rectangular cell
+         * @param {HTMLElement} cell - Cell element
+         * @param {number} i - Cell index
          */
         function buildNormalCell (cell, i) {
             if (cellAssignments[i] !== null && images[cellAssignments[i]]) {
@@ -958,9 +1220,9 @@
         }
 
         /**
-         * Builds a circle cell
-         * @param {HTMLElement} cell
-         * @param {number} i
+         * Build a circular masked cell
+         * @param {HTMLElement} cell - Cell element
+         * @param {number} i - Cell index
          */
         function buildCircleCell (cell, i) {
             const mask = document.createElement('div');
@@ -972,8 +1234,7 @@
                 img.src = images[cellAssignments[i]].dataUrl;
                 img.draggable = false;
                 mask.appendChild(img);
-                const rm = makeRemoveBtn(i);
-                mask.appendChild(rm);
+                mask.appendChild(makeRemoveBtn(i));
             } else {
                 mask.innerHTML = PLACEHOLDER;
                 cell.addEventListener('click', () => { pendingCellIndex = i; fileInput.click(); });
@@ -982,8 +1243,8 @@
         }
 
         /**
-         * Renders diamond layout cells
-         * @param {Layout} layout
+         * Render diamond layout cells
+         * @param {Object} layout - Layout configuration
          */
         function renderDiamond (layout) {
             layout.diamonds.forEach((d, i) => {
@@ -1002,10 +1263,10 @@
 
                 if (cellAssignments[i] !== null && images[cellAssignments[i]]) {
                     cell.classList.add('filled');
-                    const img = document.createElement('img');
-                    img.src = images[cellAssignments[i]].dataUrl;
-                    img.draggable = false;
-                    inner.appendChild(img);
+                    const bg = document.createElement('div');
+                    bg.className = 'diamond-bg';
+                    bg.style.backgroundImage = `url(${images[cellAssignments[i]].dataUrl})`;
+                    inner.appendChild(bg);
                     inner.appendChild(makeRemoveBtn(i));
                 } else {
                     inner.innerHTML = PLACEHOLDER;
@@ -1017,13 +1278,10 @@
             });
         }
 
-        /** @type {string} */
-        const PLACEHOLDER = `<div class="cell-placeholder"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></div>`;
-
         /**
-         * Creates a remove button for a cell
-         * @param {number} i
-         * @returns {HTMLElement}
+         * Create a remove button for a cell
+         * @param {number} i - Cell index
+         * @returns {HTMLElement} Remove button element
          */
         function makeRemoveBtn (i) {
             const btn = document.createElement('button');
@@ -1039,7 +1297,7 @@
         }
 
         /**
-         * Updates status display
+         * Update status bar with cell count
          */
         function updateStatus () {
             const total = getCellCount(LAYOUTS[activeLayout]);
@@ -1048,6 +1306,9 @@
             btnDownload.disabled = filled < total;
         }
 
+        /**
+         * Handle file input change
+         */
         fileInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             if (!files.length) return;
@@ -1067,9 +1328,9 @@
         });
 
         /**
-         * Reads a file and calls callback with image index
-         * @param {File} file
-         * @param {Function} cb
+         * Read a file and convert to data URL
+         * @param {File} file - File object
+         * @param {Function} cb - Callback with image index
          */
         function readFile (file, cb) {
             const reader = new FileReader();
@@ -1082,8 +1343,8 @@
         }
 
         /**
-         * Enqueues a file to be added to next available slot
-         * @param {File} file
+         * Enqueue a file for automatic cell assignment
+         * @param {File} file - File object
          */
         function enqueueFile (file) {
             readFile(file, (idx) => {
@@ -1098,6 +1359,9 @@
 
         btnUpload.addEventListener('click', () => { pendingCellIndex = null; fileInput.click(); });
 
+        /**
+         * Clear all images and reset collage
+         */
         btnClear.addEventListener('click', () => {
             images = [];
             cellAssignments = new Array(getCellCount(LAYOUTS[activeLayout])).fill(null);
@@ -1106,7 +1370,7 @@
         });
 
         /**
-         * Handles download of collage
+         * Handle download button click
          */
         btnDownload.addEventListener('click', async () => {
             btnDownload.textContent = 'Exporting…';
@@ -1136,6 +1400,38 @@
             wrapper.style.borderRadius = savedRadius;
             btnDownload.textContent = 'Download Collage';
             updateStatus();
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => { });
+        }
+
+        let deferredPrompt = null;
+        const installBanner = document.getElementById('install-banner');
+        const closeInstall = document.getElementById('close-install');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBanner.style.display = 'flex';
+        });
+
+        installBanner.addEventListener('click', (e) => {
+            if (e.target === closeInstall || e.target.closest('.close-install')) {
+                installBanner.style.display = 'none';
+                return;
+            }
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => {
+                    deferredPrompt = null;
+                    installBanner.style.display = 'none';
+                });
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installBanner.style.display = 'none';
         });
 
         applyBg();
