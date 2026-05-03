@@ -7,11 +7,6 @@
     <title>Collage Studio</title>
     <meta name="description" content="A minimalist photo collage builder — upload, arrange, download.">
     <meta name="theme-color" content="#111111">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Collage Studio">
-    <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%23111'/%3E%3Crect x='40' y='40' width='200' height='200' rx='16' fill='%23fff' opacity='.9'/%3E%3Crect x='270' y='40' width='200' height='90' rx='16' fill='%23fff' opacity='.7'/%3E%3Crect x='270' y='160' width='200' height='80' rx='16' fill='%23fff' opacity='.5'/%3E%3Crect x='40' y='270' width='130' height='200' rx='16' fill='%23fff' opacity='.6'/%3E%3Crect x='200' y='270' width='270' height='200' rx='16' fill='%23fff' opacity='.8'/%3E%3C/svg%3E">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Instrument+Serif:ital@0;1&display=swap');
@@ -98,15 +93,6 @@
             scrollbar-color: var(--border) transparent;
         }
 
-        .picker::-webkit-scrollbar {
-            height: 3px;
-        }
-
-        .picker::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 2px;
-        }
-
         .layout-thumb {
             flex-shrink: 0;
             width: 100px;
@@ -115,14 +101,9 @@
             border-radius: 8px;
             cursor: pointer;
             padding: 5px;
-            transition: border-color 0.2s;
             background: var(--surface);
             position: relative;
             overflow: hidden;
-        }
-
-        .layout-thumb:hover {
-            border-color: var(--border-hover);
         }
 
         .layout-thumb.active {
@@ -396,15 +377,16 @@
             border-radius: 3px;
             overflow: hidden;
             position: relative;
-            cursor: pointer;
+            cursor: move;
         }
 
         .cell-bg {
             position: absolute;
             inset: 0;
             background-size: cover;
-            background-position: center center;
+            background-position: 50% 50%;
             background-repeat: no-repeat;
+            pointer-events: none;
         }
 
         .cell-placeholder {
@@ -453,15 +435,6 @@
             margin: auto;
         }
 
-        .circle-mask .cell-bg {
-            border-radius: 50%;
-        }
-
-        .circle-mask .cell-remove {
-            top: 8px;
-            right: 8px;
-        }
-
         #collage-container.diamond-mode {
             display: block !important;
             padding: 0 !important;
@@ -473,7 +446,7 @@
             transform: rotate(45deg);
             border-radius: 16px;
             overflow: hidden;
-            cursor: pointer;
+            cursor: move;
             background: rgba(0, 0, 0, 0.06);
         }
 
@@ -493,14 +466,8 @@
             transform: rotate(-45deg) translate(-50%, -50%);
             transform-origin: top left;
             background-size: cover;
-            background-position: center center;
-        }
-
-        .diamond-cell .cell-remove {
-            position: absolute;
-            top: 35%;
-            right: 35%;
-            transform: rotate(-45deg);
+            background-position: 50% 50%;
+            pointer-events: none;
         }
 
         .actions {
@@ -521,10 +488,6 @@
             color: var(--text);
             cursor: pointer;
             transition: all 0.2s;
-        }
-
-        .btn:hover {
-            border-color: var(--accent);
         }
 
         .btn.primary {
@@ -577,7 +540,6 @@
 </head>
 
 <body>
-
     <header>
         <h1>Collage <span>Studio</span></h1>
         <div class="status" id="status">Select a layout to begin</div>
@@ -639,90 +601,33 @@
 
     <script>
         const LAYOUTS = [
-            {
-                name: 'Diamond', type: 'diamond', aspect: '16 / 9', count: 7,
-                diamonds: [
-                    { x: 24.5, y: 27, size: 25 }, { x: 50, y: 27, size: 25 }, { x: 75.5, y: 27, size: 25 },
-                    { x: 11.5, y: 64, size: 25 }, { x: 37, y: 64, size: 25 }, { x: 62.5, y: 64, size: 25 }, { x: 88, y: 64, size: 25 }
-                ]
-            },
-            {
-                name: 'Classic Grid', type: 'grid', cols: 'repeat(3, 1fr)', rows: 'repeat(3, 1fr)',
-                cells: [
-                    { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' },
-                    { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }, { col: '3/4', row: '2/3' },
-                    { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }
-                ]
-            },
-            {
-                name: 'Hero Left', type: 'grid', cols: 'repeat(4, 1fr)', rows: 'repeat(3, 1fr)',
-                cells: [
-                    { col: '1/3', row: '1/3' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
-                    { col: '3/4', row: '2/3' }, { col: '4/5', row: '2/3' },
-                    { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }, { col: '4/5', row: '3/4' }
-                ]
-            },
-            {
-                name: 'Focus Center', type: 'grid', cols: 'repeat(4, 1fr)', rows: 'repeat(3, 1fr)',
-                cells: [
-                    { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
-                    { col: '1/2', row: '2/3' }, { col: '2/4', row: '2/3', circle: true }, { col: '4/5', row: '2/3' },
-                    { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }, { col: '4/5', row: '3/4' }
-                ]
-            },
-            {
-                name: 'Magazine', type: 'grid', cols: '2fr 1fr 1fr 1fr 1fr 2fr', rows: 'repeat(4, 1fr)',
-                cells: [
-                    { col: '1/3', row: '1/3' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
-                    { col: '5/6', row: '1/2' }, { col: '6/7', row: '1/3' }, { col: '3/4', row: '2/3' },
-                    { col: '4/6', row: '2/4', circle: true }, { col: '6/7', row: '3/4' }, { col: '1/2', row: '3/5' },
-                    { col: '2/4', row: '3/5' }, { col: '4/5', row: '4/5' }, { col: '5/7', row: '4/5' }
-                ]
-            },
-            {
-                name: 'Mosaic', type: 'grid', cols: '1.2fr 1fr 1fr 1.2fr', rows: '1fr 1fr 1.3fr 1fr',
-                cells: [
-                    { col: '1/2', row: '1/3' }, { col: '2/3', row: '1/2' }, { col: '3/5', row: '1/2' },
-                    { col: '2/3', row: '2/3' }, { col: '3/4', row: '2/3' }, { col: '4/5', row: '2/3' },
-                    { col: '1/2', row: '3/4' }, { col: '2/4', row: '3/4' }, { col: '4/5', row: '3/5' },
-                    { col: '1/3', row: '4/5' }, { col: '3/4', row: '4/5' }
-                ]
-            },
-            {
-                name: 'Asymmetric', type: 'grid', cols: 'repeat(4, 1fr)', rows: 'repeat(3, 1fr)',
-                cells: [
-                    { col: '1/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
-                    { col: '1/2', row: '2/3' }, { col: '2/4', row: '2/4' }, { col: '4/5', row: '2/3' },
-                    { col: '1/2', row: '3/4' }, { col: '4/5', row: '3/4' }
-                ]
-            },
-            {
-                name: 'Wide Strip', type: 'grid', cols: 'repeat(3, 1fr)', rows: '2fr 1fr 2fr',
-                cells: [
-                    { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' },
-                    { col: '1/4', row: '2/3' },
-                    { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }
-                ]
-            },
-            {
-                name: 'Duo', type: 'grid', cols: 'repeat(4, 1fr)', rows: 'repeat(2, 1fr)',
-                cells: [
-                    { col: '1/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' },
-                    { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }, { col: '3/5', row: '2/3' }
-                ]
-            },
-            {
-                name: 'Quad', type: 'grid', cols: 'repeat(2, 1fr)', rows: 'repeat(2, 1fr)',
-                cells: [
-                    { col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' },
-                    { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }
-                ]
-            },
+            { name: 'Diamond', type: 'diamond', aspect: '16 / 9', count: 7, diamonds: [{ x: 24.5, y: 27, size: 25 }, { x: 50, y: 27, size: 25 }, { x: 75.5, y: 27, size: 25 }, { x: 11.5, y: 64, size: 25 }, { x: 37, y: 64, size: 25 }, { x: 62.5, y: 64, size: 25 }, { x: 88, y: 64, size: 25 }] },
+            { name: 'Classic Grid', type: 'grid', cols: 'repeat(3, 1fr)', rows: 'repeat(3, 1fr)', cells: [{ col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }, { col: '3/4', row: '2/3' }, { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }] },
+            { name: 'Hero Left', type: 'grid', cols: 'repeat(4, 1fr)', rows: 'repeat(3, 1fr)', cells: [{ col: '1/3', row: '1/3' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' }, { col: '3/4', row: '2/3' }, { col: '4/5', row: '2/3' }, { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }, { col: '4/5', row: '3/4' }] },
+            { name: 'Focus Center', type: 'grid', cols: 'repeat(4, 1fr)', rows: 'repeat(3, 1fr)', cells: [{ col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' }, { col: '1/2', row: '2/3' }, { col: '2/4', row: '2/3', circle: true }, { col: '4/5', row: '2/3' }, { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }, { col: '4/5', row: '3/4' }] },
+            { name: 'Magazine', type: 'grid', cols: '2fr 1fr 1fr 1fr 1fr 2fr', rows: 'repeat(4, 1fr)', cells: [{ col: '1/3', row: '1/3' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' }, { col: '5/6', row: '1/2' }, { col: '6/7', row: '1/3' }, { col: '3/4', row: '2/3' }, { col: '4/6', row: '2/4', circle: true }, { col: '6/7', row: '3/4' }, { col: '1/2', row: '3/5' }, { col: '2/4', row: '3/5' }, { col: '4/5', row: '4/5' }, { col: '5/7', row: '4/5' }] },
+            { name: 'Quad', type: 'grid', cols: 'repeat(2, 1fr)', rows: 'repeat(2, 1fr)', cells: [{ col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }] },
+            { name: 'Duo', type: 'grid', cols: 'repeat(2, 1fr)', rows: '1fr', cells: [{ col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }] },
+            { name: 'Triptych', type: 'grid', cols: 'repeat(3, 1fr)', rows: '1fr', cells: [{ col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' }] },
+            { name: 'Wide Strip', type: 'grid', cols: 'repeat(3, 1fr)', rows: '2fr 1fr 2fr', cells: [{ col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '1/4', row: '2/3' }, { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }] },
+            { name: 'Asymmetric', type: 'grid', cols: 'repeat(4, 1fr)', rows: 'repeat(3, 1fr)', cells: [{ col: '1/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' }, { col: '1/2', row: '2/3' }, { col: '2/4', row: '2/4' }, { col: '4/5', row: '2/3' }, { col: '1/2', row: '3/4' }, { col: '4/5', row: '3/4' }] },
+            { name: 'Mosaic', type: 'grid', cols: '1.2fr 1fr 1fr 1.2fr', rows: '1fr 1fr 1.3fr 1fr', cells: [{ col: '1/2', row: '1/3' }, { col: '2/3', row: '1/2' }, { col: '3/5', row: '1/2' }, { col: '2/3', row: '2/3' }, { col: '3/4', row: '2/3' }, { col: '4/5', row: '2/3' }, { col: '1/2', row: '3/4' }, { col: '2/4', row: '3/4' }, { col: '4/5', row: '3/5' }, { col: '1/3', row: '4/5' }, { col: '3/4', row: '4/5' }] },
+            { name: 'Hero Right', type: 'grid', cols: 'repeat(4, 1fr)', rows: 'repeat(3, 1fr)', cells: [{ col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/5', row: '1/3' }, { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }, { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }, { col: '4/5', row: '3/4' }] },
+            { name: 'T-Shape', type: 'grid', cols: 'repeat(4, 1fr)', rows: 'repeat(3, 1fr)', cells: [{ col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' }, { col: '2/3', row: '2/3' }, { col: '3/4', row: '2/3' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }] },
+            { name: 'L-Shape', type: 'grid', cols: 'repeat(3, 1fr)', rows: 'repeat(3, 1fr)', cells: [{ col: '1/2', row: '1/2' }, { col: '1/2', row: '2/3' }, { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }] },
+            { name: 'Cross', type: 'grid', cols: 'repeat(3, 1fr)', rows: 'repeat(3, 1fr)', cells: [{ col: '2/3', row: '1/2' }, { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }, { col: '3/4', row: '2/3' }, { col: '2/3', row: '3/4' }] },
+            { name: 'Spotlight', type: 'grid', cols: '1fr 2fr 1fr', rows: '1fr 2fr 1fr', cells: [{ col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }, { col: '3/4', row: '2/3' }, { col: '1/2', row: '3/4' }, { col: '2/3', row: '3/4' }, { col: '3/4', row: '3/4' }] },
+            { name: 'Panoramic', type: 'grid', aspect: '21 / 9', cols: 'repeat(5, 1fr)', rows: '1fr', cells: [{ col: '1/2', row: '1/2' }, { col: '2/3', row: '1/2' }, { col: '3/4', row: '1/2' }, { col: '4/5', row: '1/2' }, { col: '5/6', row: '1/2' }] },
+            { name: 'Stacked', type: 'grid', cols: '1fr', rows: 'repeat(3, 1fr)', cells: [{ col: '1/2', row: '1/2' }, { col: '1/2', row: '2/3' }, { col: '1/2', row: '3/4' }] },
+            { name: 'Big Top', type: 'grid', cols: 'repeat(3, 1fr)', rows: '2fr 1fr', cells: [{ col: '1/4', row: '1/2' }, { col: '1/2', row: '2/3' }, { col: '2/3', row: '2/3' }, { col: '3/4', row: '2/3' }] },
         ];
 
         const COLORS = [
-            { name: 'White', css: '#ffffff' }, { name: 'Snow', css: '#f2f2f2' }, { name: 'Silver', css: '#d0d0d0' },
-            { name: 'Charcoal', css: '#3a3a3a' }, { name: 'Black', css: '#0a0a0a' },
+            { name: 'White', css: '#ffffff' },
+            { name: 'Snow', css: '#f2f2f2' },
+            { name: 'Silver', css: '#d0d0d0' },
+            { name: 'Charcoal', css: '#3a3a3a' },
+            { name: 'Black', css: '#0a0a0a' },
             { name: 'Blush', css: 'linear-gradient(135deg, #d4a0b0 0%, #e8cdb5 100%)' },
             { name: 'Sky', css: 'linear-gradient(135deg, #92b8d8 0%, #c0d8ee 100%)' },
             { name: 'Sage', css: 'linear-gradient(135deg, #9aba92 0%, #c4ddb8 100%)' },
@@ -730,107 +635,56 @@
             { name: 'Lavender', css: 'linear-gradient(135deg, #b098cc 0%, #d0c0e8 100%)' },
             { name: 'Midnight', css: 'linear-gradient(135deg, #141428 0%, #1a2840 100%)' },
             { name: 'Wine', css: 'linear-gradient(135deg, #3e0e22 0%, #681838 100%)' },
+            { name: 'Sunset', css: 'linear-gradient(135deg, #e8634a 0%, #f5a623 100%)' },
+            { name: 'Ocean', css: 'linear-gradient(135deg, #1a3a5c 0%, #2980b9 100%)' },
+            { name: 'Forest', css: 'linear-gradient(135deg, #1a3c2a 0%, #2d6b4e 100%)' },
+            { name: 'Rose Gold', css: 'linear-gradient(135deg, #b76e79 0%, #e8c8b0 100%)' },
+            { name: 'Slate', css: 'linear-gradient(135deg, #4a5568 0%, #718096 100%)' },
+            { name: 'Coral', css: 'linear-gradient(135deg, #ff6b6b 0%, #ffa07a 100%)' },
+            { name: 'Aurora', css: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #533483 100%)' },
+            { name: 'Honey', css: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' },
         ];
 
-        let activeLayout = 0, images = [], cellAssignments = [], pendingCellIndex = null;
-        let activeBg = 0, gridWidth = 100, wmEnabled = false, wmText = '', wmPosition = 'br';
+        let activeLayout = 0, images = [], cellAssignments = [], cellPositions = [], activeBg = 0, gridWidth = 100, wmEnabled = false, wmText = '', wmPosition = 'br';
 
-        const picker = document.getElementById('picker'), container = document.getElementById('collage-container');
-        const wrapper = document.getElementById('download-wrapper'), btnUpload = document.getElementById('btn-upload');
-        const btnClear = document.getElementById('btn-clear'), btnDownload = document.getElementById('btn-download');
-        const fileInput = document.getElementById('file-input'), statusEl = document.getElementById('status');
-        const paletteEl = document.getElementById('palette'), widthSlider = document.getElementById('width-slider');
-        const widthValEl = document.getElementById('width-val'), wmToggle = document.getElementById('wm-toggle');
-        const wmTrack = document.getElementById('wm-track'), wmInput = document.getElementById('wm-text');
-        const wmPosGroup = document.getElementById('wm-pos-group'), wmOverlay = document.getElementById('watermark');
+        const container = document.getElementById('collage-container'), wrapper = document.getElementById('download-wrapper'), fileInput = document.getElementById('file-input'), statusEl = document.getElementById('status'), btnDownload = document.getElementById('btn-download'), wmOverlay = document.getElementById('watermark');
 
-        LAYOUTS.forEach((layout, i) => {
-            const thumb = document.createElement('div');
-            thumb.className = 'layout-thumb' + (i === 0 ? ' active' : '');
-            if (layout.type === 'diamond') {
-                const wrap = document.createElement('div');
-                wrap.className = 'mini-diamond-wrap';
-                layout.diamonds.forEach(d => {
-                    const el = document.createElement('div'); el.className = 'mini-diamond';
-                    const sz = d.size * 0.35, szH = sz * 1.78;
-                    el.style.cssText = `width:${sz}%;height:${szH}%;left:${d.x * 0.9 - sz / 2 + 4}%;top:${d.y * 0.9 - szH / 2 + 2}%;`;
-                    wrap.appendChild(el);
-                });
-                thumb.appendChild(wrap);
-            } else {
-                const miniGrid = document.createElement('div'); miniGrid.className = 'mini-grid';
-                miniGrid.style.gridTemplateColumns = layout.cols; miniGrid.style.gridTemplateRows = layout.rows;
-                layout.cells.forEach(c => {
-                    const el = document.createElement('div'); el.className = 'cell' + (c.circle ? ' circle' : '');
-                    el.style.gridColumn = c.col; el.style.gridRow = c.row;
-                    miniGrid.appendChild(el);
-                });
-                thumb.appendChild(miniGrid);
-            }
-            const badge = document.createElement('div'); badge.className = 'count-badge'; badge.textContent = getCellCount(layout);
-            thumb.appendChild(badge); thumb.onclick = () => selectLayout(i); picker.appendChild(thumb);
-        });
+        // Drag Logic State
+        let isDragging = false, startX, startY, currentCellIndex = null;
 
         function getCellCount (l) { return l.type === 'diamond' ? l.count : l.cells.length; }
 
-        COLORS.forEach((c, i) => {
-            const sw = document.createElement('div'); sw.className = 'swatch' + (i === 0 ? ' active' : '');
-            sw.style.background = c.css; sw.onclick = () => { activeBg = i; document.querySelectorAll('.swatch').forEach((s, j) => s.classList.toggle('active', j === i)); applyBg(); };
-            paletteEl.appendChild(sw);
-        });
-
-        function applyBg () { wrapper.style.background = COLORS[activeBg].css; }
-        function applyWidth () { container.style.width = gridWidth + '%'; container.style.height = gridWidth + '%'; }
-
-        widthSlider.oninput = (e) => { gridWidth = parseInt(e.target.value); widthValEl.textContent = gridWidth + '%'; applyWidth(); };
-
-        wmToggle.onclick = () => {
-            wmEnabled = !wmEnabled; wmTrack.classList.toggle('on', wmEnabled);
-            wmToggle.querySelector('.toggle-label').textContent = wmEnabled ? 'On' : 'Off';
-            wmInput.disabled = !wmEnabled; wmPosGroup.querySelectorAll('.wm-pos-btn').forEach(b => b.disabled = !wmEnabled);
-            updateWatermark();
-        };
-
-        wmInput.oninput = (e) => { wmText = e.target.value; updateWatermark(); };
-        wmPosGroup.onclick = (e) => {
-            const btn = e.target.closest('.wm-pos-btn'); if (!btn || btn.disabled) return;
-            wmPosition = btn.dataset.pos; wmPosGroup.querySelectorAll('.wm-pos-btn').forEach(b => b.classList.toggle('active', b.dataset.pos === wmPosition));
-            updateWatermark();
-        };
-
-        function updateWatermark () {
-            if (!wmEnabled || !wmText.trim()) { wmOverlay.style.display = 'none'; return; }
-            wmOverlay.style.display = 'block'; wmOverlay.textContent = wmText; wmOverlay.className = 'watermark-overlay pos-' + wmPosition;
-        }
-
         function selectLayout (idx) {
-            activeLayout = idx; document.querySelectorAll('.layout-thumb').forEach((t, j) => t.classList.toggle('active', j === idx));
-            const layout = LAYOUTS[idx]; cellAssignments = new Array(getCellCount(layout)).fill(null);
-            wrapper.style.aspectRatio = layout.aspect || '4 / 3'; renderGrid(); updateStatus();
+            activeLayout = idx;
+            document.querySelectorAll('.layout-thumb').forEach((t, j) => t.classList.toggle('active', j === idx));
+            const layout = LAYOUTS[idx];
+            const count = getCellCount(layout);
+            cellAssignments = new Array(count).fill(null);
+            cellPositions = new Array(count).fill({ x: 50, y: 50 });
+            wrapper.style.aspectRatio = layout.aspect || '4 / 3';
+            renderGrid(); updateStatus();
         }
-
-        const PLACEHOLDER = `<div class="cell-placeholder"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></div>`;
 
         function renderGrid () {
             const layout = LAYOUTS[activeLayout]; container.innerHTML = '';
-            if (layout.type === 'diamond') { container.classList.add('diamond-mode'); renderDiamond(layout); }
-            else {
-                container.classList.remove('diamond-mode'); container.style.display = 'grid';
-                container.style.gridTemplateColumns = layout.cols; container.style.gridTemplateRows = layout.rows;
-                layout.cells.forEach((def, i) => {
-                    const cell = document.createElement('div'); cell.className = 'collage-cell' + (def.circle ? ' circle-cell' : '');
-                    cell.style.gridColumn = def.col; cell.style.gridRow = def.row;
-                    const inner = def.circle ? document.createElement('div') : cell;
-                    if (def.circle) { inner.className = 'circle-mask'; cell.appendChild(inner); }
-                    if (cellAssignments[i] !== null) {
-                        cell.classList.add('filled');
-                        const bg = document.createElement('div'); bg.className = 'cell-bg'; bg.style.backgroundImage = `url(${images[cellAssignments[i]].dataUrl})`;
-                        inner.appendChild(bg); inner.appendChild(makeRemoveBtn(i));
-                    } else { inner.innerHTML = PLACEHOLDER; cell.onclick = () => { pendingCellIndex = i; fileInput.click(); }; }
-                    container.appendChild(cell);
-                });
-            }
+            container.className = layout.type === 'diamond' ? 'diamond-mode' : '';
+            if (layout.type === 'diamond') renderDiamond(layout); else renderCells(layout);
             applyWidth();
+        }
+
+        function renderCells (layout) {
+            container.style.display = 'grid';
+            container.style.gridTemplateColumns = layout.cols;
+            container.style.gridTemplateRows = layout.rows;
+            layout.cells.forEach((def, i) => {
+                const cell = document.createElement('div');
+                cell.className = 'collage-cell' + (def.circle ? ' circle-cell' : '');
+                cell.style.gridColumn = def.col; cell.style.gridRow = def.row;
+                const inner = def.circle ? document.createElement('div') : cell;
+                if (def.circle) { inner.className = 'circle-mask'; cell.appendChild(inner); }
+                setupCellContent(cell, inner, i);
+                container.appendChild(cell);
+            });
         }
 
         function renderDiamond (layout) {
@@ -838,12 +692,47 @@
                 const cell = document.createElement('div'); cell.className = 'diamond-cell';
                 cell.style.cssText = `width:${d.size}%;height:0;padding-bottom:${d.size}%;left:${d.x - d.size / 2}%;top:${d.y - d.size / 2}%;`;
                 const inner = document.createElement('div'); inner.className = 'diamond-inner';
-                if (cellAssignments[i] !== null) {
-                    const bg = document.createElement('div'); bg.className = 'diamond-bg'; bg.style.backgroundImage = `url(${images[cellAssignments[i]].dataUrl})`;
-                    inner.appendChild(bg); inner.appendChild(makeRemoveBtn(i));
-                } else { inner.innerHTML = PLACEHOLDER; cell.onclick = () => { pendingCellIndex = i; fileInput.click(); }; }
+                setupCellContent(cell, inner, i, true);
                 cell.appendChild(inner); container.appendChild(cell);
             });
+        }
+
+        function setupCellContent (cell, inner, i, isDiamond = false) {
+            if (cellAssignments[i] !== null) {
+                cell.classList.add('filled');
+                const bg = document.createElement('div');
+                bg.className = isDiamond ? 'diamond-bg' : 'cell-bg';
+                bg.style.backgroundImage = `url(${images[cellAssignments[i]].dataUrl})`;
+                bg.style.backgroundPosition = `${cellPositions[i].x}% ${cellPositions[i].y}%`;
+                inner.appendChild(bg);
+                inner.appendChild(makeRemoveBtn(i));
+                cell.onmousedown = (e) => startDrag(e, i, bg);
+            } else {
+                inner.innerHTML = `<div class="cell-placeholder"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></div>`;
+                cell.onclick = () => { currentCellIndex = i; fileInput.click(); };
+            }
+        }
+
+        function startDrag (e, i, bgEl) {
+            if (e.target.classList.contains('cell-remove')) return;
+            isDragging = true;
+            startX = e.clientX; startY = e.clientY;
+            const initialX = cellPositions[i].x;
+            const initialY = cellPositions[i].y;
+
+            const onMove = (moveEvent) => {
+                if (!isDragging) return;
+                const dx = moveEvent.clientX - startX;
+                const dy = moveEvent.clientY - startY;
+                const newX = Math.max(0, Math.min(100, initialX - (dx / container.offsetWidth * 100)));
+                const newY = Math.max(0, Math.min(100, initialY - (dy / container.offsetHeight * 100)));
+                cellPositions[i] = { x: newX, y: newY };
+                bgEl.style.backgroundPosition = `${newX}% ${newY}%`;
+            };
+
+            const onUp = () => { isDragging = false; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
         }
 
         function makeRemoveBtn (i) {
@@ -852,89 +741,122 @@
             return btn;
         }
 
-        function updateStatus () {
-            const filled = cellAssignments.filter(a => a !== null).length;
-            statusEl.innerHTML = `<strong>${filled}</strong> / ${getCellCount(LAYOUTS[activeLayout])} images placed`;
-            btnDownload.disabled = filled < getCellCount(LAYOUTS[activeLayout]);
-        }
-
         fileInput.onchange = (e) => {
-            const files = Array.from(e.target.files); if (!files.length) return;
+            const files = Array.from(e.target.files);
             const process = (f, slot) => {
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     const idx = images.length; images.push({ dataUrl: ev.target.result });
-                    if (slot !== undefined) { cellAssignments[slot] = idx; renderGrid(); updateStatus(); }
+                    cellAssignments[slot] = idx; renderGrid(); updateStatus();
                 };
                 reader.readAsDataURL(f);
             };
-            if (pendingCellIndex !== null) { process(files[0], pendingCellIndex); pendingCellIndex = null; files.slice(1).forEach(f => { const s = cellAssignments.indexOf(null); if (s !== -1) process(f, s); }); }
-            else { files.forEach(f => { const s = cellAssignments.indexOf(null); if (s !== -1) process(f, s); }); }
-            fileInput.value = '';
+            if (currentCellIndex !== null) process(files[0], currentCellIndex);
+            fileInput.value = ''; currentCellIndex = null;
         };
 
-        btnUpload.onclick = () => { pendingCellIndex = null; fileInput.click(); };
-        btnClear.onclick = () => { images = []; cellAssignments = new Array(getCellCount(LAYOUTS[activeLayout])).fill(null); renderGrid(); updateStatus(); };
-
-        // ULTIMATE 4K FIX: Rendering through high-res absolute cloning
         btnDownload.onclick = async () => {
-            const originalText = btnDownload.textContent;
-            btnDownload.textContent = 'Baking 4K Image...';
-            btnDownload.disabled = true;
+            btnDownload.textContent = 'Baking 4K...';
+            const originalBorder = wrapper.style.border;
+            wrapper.style.border = 'none'; wrapper.style.borderRadius = '0';
 
-            const savedBorder = wrapper.style.border, savedRadius = wrapper.style.borderRadius, savedShadow = wrapper.style.boxShadow;
-            wrapper.style.border = 'none'; wrapper.style.borderRadius = '0'; wrapper.style.boxShadow = 'none';
+            const targetWidth = 3840;
+            const scale = targetWidth / wrapper.offsetWidth;
 
-            try {
-                // target 4K width (3840px)
-                const targetWidth = 3840;
-                const rect = wrapper.getBoundingClientRect();
-                const currentWidth = rect.width;
-                const dynamicScale = targetWidth / currentWidth;
+            const canvas = await html2canvas(wrapper, {
+                scale: scale,
+                useCORS: true,
+                backgroundColor: null,
+                onclone: (clonedDoc) => {
+                    clonedDoc.getElementById('download-wrapper').style.boxShadow = 'none';
+                }
+            });
 
-                const canvas = await html2canvas(wrapper, {
-                    scale: dynamicScale,
-                    useCORS: true,
-                    backgroundColor: null,
-                    logging: false,
-                    onclone: (clonedDoc) => {
-                        const el = clonedDoc.getElementById('download-wrapper');
-                        const cont = clonedDoc.getElementById('collage-container');
-
-                        // Force absolute pixel values to prevent rounding "gaps"
-                        el.style.width = currentWidth + 'px';
-                        el.style.height = rect.height + 'px';
-                        el.style.transform = 'none';
-                        el.style.margin = '0';
-
-                        // Deep-stabilize cells
-                        const cells = cont.querySelectorAll('.collage-cell, .diamond-cell');
-                        cells.forEach(c => {
-                            c.style.backfaceVisibility = 'hidden';
-                            c.style.webkitFontSmoothing = 'antialiased';
-                        });
-                    }
-                });
-
-                // Post-process canvas for ultra-sharpness
-                const ctx = canvas.getContext('2d');
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-
-                const link = document.createElement('a');
-                link.download = `collage_ultra_4k_${Date.now()}.png`;
-                link.href = canvas.toDataURL('image/png', 1.0);
-                link.click();
-            } catch (err) {
-                console.error(err);
-                alert('4K bake failed. Please ensure all images are loaded.');
-            } finally {
-                wrapper.style.border = savedBorder; wrapper.style.borderRadius = savedRadius; wrapper.style.boxShadow = savedShadow;
-                btnDownload.textContent = originalText; updateStatus();
-            }
+            const link = document.createElement('a');
+            link.download = `collage_4k.png`;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+            wrapper.style.border = originalBorder;
+            btnDownload.textContent = 'Download Collage';
         };
 
-        applyBg(); selectLayout(0);
+        // UI Helpers
+        const applyBg = () => wrapper.style.background = COLORS[activeBg].css;
+        const applyWidth = () => { container.style.width = gridWidth + '%'; container.style.height = gridWidth + '%'; };
+        const updateStatus = () => {
+            const filled = cellAssignments.filter(a => a !== null).length;
+            statusEl.innerHTML = `<strong>${filled}</strong> / ${getCellCount(LAYOUTS[activeLayout])} images placed`;
+            btnDownload.disabled = filled < getCellCount(LAYOUTS[activeLayout]);
+        };
+
+        // Controls Initialization
+        document.getElementById('width-slider').oninput = (e) => { gridWidth = e.target.value; document.getElementById('width-val').innerText = gridWidth + '%'; applyWidth(); };
+        document.getElementById('wm-toggle').onclick = () => { wmEnabled = !wmEnabled; document.getElementById('wm-track').classList.toggle('on', wmEnabled); document.getElementById('wm-text').disabled = !wmEnabled; updateWatermark(); };
+        document.getElementById('wm-text').oninput = (e) => { wmText = e.target.value; updateWatermark(); };
+        function updateWatermark () { wmOverlay.style.display = wmEnabled ? 'block' : 'none'; wmOverlay.innerText = wmText; }
+
+        // Layout Picker Init
+        LAYOUTS.forEach((l, i) => {
+            const thumb = document.createElement('div');
+            thumb.className = 'layout-thumb' + (i === 0 ? ' active' : '');
+
+            if (l.type === 'diamond') {
+                const wrap = document.createElement('div');
+                wrap.className = 'mini-diamond-wrap';
+                l.diamonds.forEach(d => {
+                    const el = document.createElement('div');
+                    el.className = 'mini-diamond';
+                    const sz = d.size * 0.35;
+                    const szH = sz * 1.78;
+                    el.style.cssText = `width:${sz}%;height:${szH}%;left:${d.x * 0.9 - sz / 2 + 4}%;top:${d.y * 0.9 - szH / 2 + 2}%;`;
+                    wrap.appendChild(el);
+                });
+                thumb.appendChild(wrap);
+            } else {
+                const miniGrid = document.createElement('div');
+                miniGrid.className = 'mini-grid';
+                miniGrid.style.gridTemplateColumns = l.cols;
+                miniGrid.style.gridTemplateRows = l.rows;
+                l.cells.forEach(c => {
+                    const el = document.createElement('div');
+                    el.className = 'cell' + (c.circle ? ' circle' : '');
+                    el.style.gridColumn = c.col;
+                    el.style.gridRow = c.row;
+                    if (c.circle) {
+                        el.style.display = 'flex';
+                        el.style.alignItems = 'center';
+                        el.style.justifyContent = 'center';
+                        el.style.background = 'transparent';
+                        const dot = document.createElement('div');
+                        dot.style.cssText = 'aspect-ratio:1;max-width:100%;max-height:100%;border-radius:50%;background:#e8e8e8;width:100%;';
+                        el.appendChild(dot);
+                    }
+                    miniGrid.appendChild(el);
+                });
+                thumb.appendChild(miniGrid);
+            }
+
+            const badge = document.createElement('div');
+            badge.className = 'count-badge';
+            badge.textContent = getCellCount(l);
+            thumb.appendChild(badge);
+
+            thumb.onclick = () => selectLayout(i);
+            document.getElementById('picker').appendChild(thumb);
+        });
+
+        // Palette Init
+        COLORS.forEach((c, i) => {
+            const sw = document.createElement('div'); sw.className = 'swatch' + (i === 0 ? ' active' : ''); sw.style.background = c.css;
+            sw.onclick = () => { activeBg = i; document.querySelectorAll('.swatch').forEach((s, j) => s.classList.toggle('active', j === i)); applyBg(); };
+            document.getElementById('palette').appendChild(sw);
+        });
+
+        // Upload & Clear
+        document.getElementById('btn-upload').onclick = () => { currentCellIndex = null; fileInput.click(); };
+        document.getElementById('btn-clear').onclick = () => { images = []; cellAssignments = new Array(getCellCount(LAYOUTS[activeLayout])).fill(null); cellPositions = new Array(getCellCount(LAYOUTS[activeLayout])).fill({ x: 50, y: 50 }); renderGrid(); updateStatus(); };
+
+        selectLayout(0);
     </script>
 </body>
 
